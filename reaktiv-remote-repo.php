@@ -50,7 +50,12 @@ class Reaktiv_Remote_Repo {
 	 * @since 0.0.1
 	 */
 	public function add_endpoint( $rewrite_rules ) {
-		add_rewrite_endpoint( 'update', EP_ALL );
+
+		// run the endpoint filter with sanitization
+		$endpoint	= apply_filters( 'rkv_remote_repo_endpoint', 'update' );
+		$endpoint	= sanitize_html_class( $endpoint, 'update' );
+
+		add_rewrite_endpoint( $endpoint, EP_ALL );
 	}
 
 	/**
@@ -68,6 +73,9 @@ class Reaktiv_Remote_Repo {
 		$vars[] = 'key';
 		$vars[] = 'action';
 		$vars[] = 'slug';
+
+		// add custom vars
+		$vars	= apply_filters( 'rkv_remote_repo_vars', $vars );
 
 		return $vars;
 	}
@@ -120,8 +128,10 @@ class Reaktiv_Remote_Repo {
 			'updated'		=> $upd_show,
 		);
 
+		$product_data	= apply_filters( 'rkv_remote_repo_product_data', $product_data, $product_id );
+
 		// return single bit of info if requested
-		if ( $meta )
+		if ( $meta && isset( $product_data[ $meta ] ) )
 			return $product_data[ $meta ];
 
 		return $product_data;
@@ -293,6 +303,8 @@ class Reaktiv_Remote_Repo {
 
 		endif;
 
+		/* TODO add custom validation method */
+
 		// all checks passed, return product file
 		return $product_data;
 
@@ -310,6 +322,8 @@ class Reaktiv_Remote_Repo {
 			'url'			=> $product_data['location'],
 			'package'		=> $product_data['package'],
 		);
+
+		$response	= apply_filters( 'rkv_remote_repo_update_check', $response );
 
 		return $response;
 
@@ -334,6 +348,8 @@ class Reaktiv_Remote_Repo {
 			),
 			'download_link' => $product_data['package'],
 		);
+
+		$response	= apply_filters( 'rkv_remote_repo_plugin_details', $response );
 
 		return $response;
 

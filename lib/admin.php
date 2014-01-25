@@ -80,9 +80,10 @@ class GP_Pro_Remote_Updater_Admin
 		unset( $columns['date'] );
 
 		// now add the custom stuff
-		$columns['title']			= 'Item Name';
-		$columns['file-name']		= 'File Name';
-		$columns['file-version']	= 'Version';
+		$columns['title']		= 'Item Name';
+		$columns['package']		= 'Package File';
+		$columns['version']		= 'Version';
+		$columns['updated']		= 'Updated';
 
 		return $columns;
 
@@ -101,15 +102,22 @@ class GP_Pro_Remote_Updater_Admin
 
 		switch ( $column ) {
 
-		case 'file-name':
-			$name	= !empty( $meta['package'] ) ? $meta['package'] : '(none entered)';
+		case 'package':
+			$name	= !empty( $meta['package'] ) ? '<a href="'.esc_url( $meta['package'] ).'">Download</a>' : '(none entered)';
 
-			echo esc_attr( $name );
+			echo $name;
 
 			break;
 
-		case 'file-version':
+		case 'version':
 			$vers	= !empty( $meta['version'] ) ? $meta['version'] : '(none entered)';
+
+			echo $vers;
+
+			break;
+
+		case 'updated':
+			$vers	= !empty( $meta['updated'] ) ? date( 'Y-m-d', floatval( $meta['updated'] ) ) : '(none entered)';
 
 			echo $vers;
 

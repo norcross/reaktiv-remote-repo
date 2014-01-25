@@ -19,11 +19,11 @@ label.repo-item-label {
 	width: 60%;
 }
 
-p.addon-updated-field {
+p.repo-updated-field {
 	position: relative;
 }
 
-p.addon-updated-field .gppr-cal-icon {
+p.repo-updated-field .rkv-cal-icon {
 	position: absolute;
 	right: 152px;
 	top: 8px;
