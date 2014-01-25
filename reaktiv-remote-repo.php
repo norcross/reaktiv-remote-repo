@@ -397,7 +397,7 @@ class Reaktiv_Remote_Repo {
 	 * @since 0.0.1
 	 * @global $wp_query
 	 *
-	 * @param int $status_code
+	 * @param int $process
 	 */
 
 	public function output( $process ) {
