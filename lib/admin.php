@@ -15,12 +15,12 @@ class GP_Pro_Remote_Updater_Admin
 		add_action		(	'init',									array(	$this, '_register_types'		) 			);
 		add_action		(	'admin_enqueue_scripts',				array(	$this, 'admin_enqueue'			),	10		);
 		add_action		(	'add_meta_boxes',						array(	$this, 'create_metaboxes'		)			);
-		add_action		(	'save_post',							array(	$this, 'save_addon_meta'		),	1		);
+		add_action		(	'save_post',							array(	$this, 'save_repo_item_meta'	),	1		);
 		add_action		(	'manage_posts_custom_column',			array(	$this, 'display_columns'		),	10,	2	);
 
 		add_filter		(	'custom_menu_order',					array(	$this, 'menu_order'				)           );
 		add_filter		(	'menu_order',							array(	$this, 'menu_order'				)           );
-		add_filter		(	'manage_edit-gppro-addons_columns',		array(	$this, 'addon_columns'			)			);
+		add_filter		(	'manage_edit-repo-items_columns',		array(	$this, 'repo_columns'			)			);
 
 	}
 
@@ -35,15 +35,15 @@ class GP_Pro_Remote_Updater_Admin
 
 		$screen = get_current_screen();
 
-		if ( is_object( $screen ) && $screen->post_type == 'gppro-addons' ) :
+		if ( is_object( $screen ) && $screen->post_type == 'repo-items' ) :
 
-			wp_enqueue_style( 'gpadd-admin',	plugins_url( '/css/gpp.addon.admin.css', __FILE__ ), array(), null,	'all' );
+			wp_enqueue_style( 'rkv-repo',	plugins_url( '/css/rkv.repo.admin.css', __FILE__ ), array(), null,	'all' );
 
 			wp_enqueue_media();
 			wp_enqueue_script( 'datepick',	plugins_url( '/js/jquery.datepick.min.js', __FILE__ ),	array('jquery'),	null, true	);
-			wp_enqueue_script( 'gpadd-admin', plugins_url( '/js/gpp.addon.admin.js', __FILE__ ) , array( 'jquery' ), null, true );
-			wp_localize_script( 'gpadd-admin', 'gpaddAsset', array(
-				'icon' => '<i class="dashicons dashicons-calendar gppr-cal-icon"></i>',
+			wp_enqueue_script( 'rkv-repo', plugins_url( '/js/rkv.repo.admin.js', __FILE__ ) , array( 'jquery' ), null, true );
+			wp_localize_script( 'rkv-repo', 'rkvAsset', array(
+				'icon' => '<i class="dashicons dashicons-calendar rkv-cal-icon"></i>',
 			));
 
 		endif;
@@ -63,7 +63,7 @@ class GP_Pro_Remote_Updater_Admin
 
 		return array(
 			'index.php',						// this represents the dashboard link
-			'edit.php?post_type=gppro-addons',	// custom post type
+			'edit.php?post_type=repo-items',	// custom post type
 			'edit.php',							// this is the default POST admin menu
 		);
 	}
@@ -74,7 +74,7 @@ class GP_Pro_Remote_Updater_Admin
 	 * @return
 	 */
 
-	public function addon_columns( $columns ) {
+	public function repo_columns( $columns ) {
 
 		// remove stuff
 		unset( $columns['date'] );
@@ -97,19 +97,19 @@ class GP_Pro_Remote_Updater_Admin
 
 	public function display_columns( $column, $post_id ) {
 
+		$meta	= get_post_meta( $post_id, '_rkv_repo_data', true );
+
 		switch ( $column ) {
 
 		case 'file-name':
-			$meta	= get_post_meta( $post_id, '_gpp_addon_file', true );
-			$name	= !empty( $meta ) ? $meta : '(none entered)';
+			$name	= !empty( $meta['package'] ) ? $meta['package'] : '(none entered)';
 
 			echo esc_attr( $name );
 
 			break;
 
 		case 'file-version':
-			$meta	= get_post_meta( $post_id, '_gpp_addon_version', true );
-			$vers	= !empty( $meta ) ? $meta : '(none entered)';
+			$vers	= !empty( $meta['version'] ) ? $meta['version'] : '(none entered)';
 
 			echo $vers;
 
@@ -128,8 +128,8 @@ class GP_Pro_Remote_Updater_Admin
 
 	public function create_metaboxes() {
 
-		add_meta_box( 'add-on-file', __( 'File Details', '' ), array( $this, 'file_details' ), 'gppro-addons', 'normal', 'high' );
-		add_meta_box( 'add-on-side', __( 'Version Details', '' ), array( $this, 'version_details' ), 'gppro-addons', 'side', 'low' );
+		add_meta_box( 'repo-items-file', __( 'File Details', '' ), array( $this, 'file_details' ), 'repo-items', 'normal', 'high' );
+		add_meta_box( 'repo-items-side', __( 'Version Details', '' ), array( $this, 'version_details' ), 'repo-items', 'side', 'low' );
 
 	}
 
@@ -142,10 +142,10 @@ class GP_Pro_Remote_Updater_Admin
 	public function file_details( $post ) {
 
 		// Use nonce for verification
-		wp_nonce_field( 'gpadd_meta_nonce', 'gpadd_meta_nonce' );
+		wp_nonce_field( 'rkv_repo_meta_nonce', 'rkv_repo_meta_nonce' );
 
 		// get the data array
-		$data		= get_post_meta( $post->ID, '_gpp_addon_data', true );
+		$data		= get_post_meta( $post->ID, '_rkv_repo_data', true );
 
 		$package		= isset( $data['package'] )		&& ! empty( $data['package'] )		? $data['package']		: '';
 		$location		= isset( $data['location'] )	&& ! empty( $data['location'] )		? $data['location']		: '';
@@ -154,48 +154,48 @@ class GP_Pro_Remote_Updater_Admin
 
 
 		// build table
-		echo '<table id="addon-meta-table" class="form-table">';
+		echo '<table id="repo-meta-table" class="form-table">';
 		echo '<tbody>';
 
 		// setup each field
-		echo '<tr class="addon-package-field">';
+		echo '<tr class="repo-package-field">';
 			echo '<th>';
-				echo '<label for="addon-package">'.__( 'Package File', '' ).'</label>';
+				echo '<label for="repo-package">'.__( 'Package File', '' ).'</label>';
 			echo '</th>';
 			echo '<td>';
-				echo '<input type="url" name="addon-meta[package]" id="addon-package" class="gppr-file-text" value="'. esc_url( $package ).'">';
-				echo '<input data-uploader_title="'.__( 'Select A File', '' ).'" data-uploader_button="'.__( 'Select', '' ).'" class="button button-secondary addon-file-upload" type="button" value="'.__( 'Add File', '' ).'">';
+				echo '<input type="url" name="repo-meta[package]" id="repo-package" class="repo-item-file-text" value="'. esc_url( $package ).'">';
+				echo '<input data-uploader_title="'.__( 'Select A File', '' ).'" data-uploader_button="'.__( 'Select', '' ).'" class="button button-secondary repo-file-upload" type="button" value="'.__( 'Add File', '' ).'">';
 
 				echo '<p class="description">'.__( 'The zipped package file to serve for updating.', '' ).'</p>';
 			echo '</td>';
 		echo '</tr>';
 
-		echo '<tr class="addon-location-field">';
+		echo '<tr class="repo-location-field">';
 			echo '<th>';
-				echo '<label for="addon-location">'.__( 'Download Location', '' ).'</label>';
+				echo '<label for="repo-location">'.__( 'Download Location', '' ).'</label>';
 			echo '</th>';
 			echo '<td>';
-				echo '<input type="url" name="addon-meta[location]" id="addon-location" class="gppr-file-text" value="'.esc_url( $location ).'">';
+				echo '<input type="url" name="repo-meta[location]" id="repo-location" class="repo-item-file-text" value="'.esc_url( $location ).'">';
 				echo '<p class="description">'.__( 'The external location for download or purchase', '' ).'</p>';
 			echo '</td>';
 		echo '</tr>';
 
-		echo '<tr class="addon-description-field">';
+		echo '<tr class="repo-description-field">';
 			echo '<th>';
-				echo '<label for="addon-description">'.__( 'Item Description', '' ).'</label>';
+				echo '<label for="repo-description">'.__( 'Item Description', '' ).'</label>';
 			echo '</th>';
 			echo '<td>';
-				echo '<input type="text" name="addon-meta[description]" id="addon-description" class="gppr-file-text" value="'.esc_attr( $description ).'">';
+				echo '<input type="text" name="repo-meta[description]" id="repo-description" class="repo-item-file-text" value="'.esc_attr( $description ).'">';
 				echo '<p class="description">'.__( 'Short description to include in update', '' ).'</p>';
 			echo '</td>';
 		echo '</tr>';
 
-		echo '<tr class="addon-changelog-field">';
+		echo '<tr class="repo-changelog-field">';
 			echo '<th>';
-				echo '<label for="addon-changelog">'.__( 'Changelog', '' ).'</label>';
+				echo '<label for="repo-changelog">'.__( 'Changelog', '' ).'</label>';
 			echo '</th>';
 			echo '<td>';
-				echo '<textarea name="addon-meta[changelog]" id="addon-changelog" class="gppr-textarea code">'.esc_attr( $changelog ).'</textarea>';
+				echo '<textarea name="repo-meta[changelog]" id="repo-changelog" class="repo-item-textarea code">'.esc_attr( $changelog ).'</textarea>';
 				echo '<p class="description">'.__( 'Changelog updates', '' ).'</p>';
 			echo '</td>';
 		echo '</tr>';
@@ -213,7 +213,7 @@ class GP_Pro_Remote_Updater_Admin
 
 	public function version_details( $post ) {
 
-		$data		= get_post_meta( $post->ID, '_gpp_addon_data', true );
+		$data		= get_post_meta( $post->ID, '_rkv_repo_data', true );
 
 		$version	= isset( $data['version'] )		&& ! empty( $data['version'] )	? $data['version']	: '';
 		$requires	= isset( $data['requires'] )	&& ! empty( $data['requires'] )	? $data['requires']	: '';
@@ -221,25 +221,25 @@ class GP_Pro_Remote_Updater_Admin
 		$upd_stamp	= isset( $data['updated'] )		&& ! empty( $data['updated'] )	? $data['updated']	: '';
 		$upd_show	= ! empty( $upd_stamp ) ? date( 'Y-m-d', floatval( $upd_stamp ) ) : '';
 
-		echo '<p class="addon-side-field addon-version-field">';
-			echo '<input type="text" name="addon-meta[version]" id="addon-version" class="gppr-num-text" value="'.esc_attr( $version ).'">';
-			echo '&nbsp;<label class="gppr-num-label" for="addon-version">'.__( 'Current Version', '' ).'</label>';
+		echo '<p class="repo-side-field repo-version-field">';
+			echo '<input type="text" name="repo-meta[version]" id="repo-version" class="repo-item-num-text" value="'.esc_attr( $version ).'">';
+			echo '&nbsp;<label class="repo-item-label" for="repo-version">'.__( 'Current Version', '' ).'</label>';
 		echo '</p>';
 
-		echo '<p class="addon-side-field addon-requires-field">';
-			echo '<input type="text" name="addon-meta[requires]" id="addon-requires" class="gppr-num-text" value="'.esc_attr( $requires ).'">';
-			echo '&nbsp;<label class="gppr-num-label" for="addon-requires">'.__( 'Minimum WP Version', '' ).'</label>';
+		echo '<p class="repo-side-field repo-requires-field">';
+			echo '<input type="text" name="repo-meta[requires]" id="repo-requires" class="repo-item-num-text" value="'.esc_attr( $requires ).'">';
+			echo '&nbsp;<label class="repo-item-label" for="repo-requires">'.__( 'Minimum WP Version', '' ).'</label>';
 		echo '</p>';
 
-		echo '<p class="addon-side-field addon-tested-field">';
-			echo '<input type="text" name="addon-meta[tested]" id="addon-tested" class="gppr-num-text" value="'.esc_attr( $tested ).'">';
-			echo '&nbsp;<label class="gppr-num-label" for="addon-tested">'.__( 'Tested Up To', '' ).'</label>';
+		echo '<p class="repo-side-field repo-tested-field">';
+			echo '<input type="text" name="repo-meta[tested]" id="repo-tested" class="repo-item-num-text" value="'.esc_attr( $tested ).'">';
+			echo '&nbsp;<label class="repo-item-label" for="repo-tested">'.__( 'Tested Up To', '' ).'</label>';
 		echo '</p>';
 
-		echo '<p class="addon-side-field addon-updated-field">';
-			echo '<input type="text" name="" id="addon-updated" class="gppr-num-text" value="'.$upd_show.'">';
-			echo '<input type="hidden" name="addon-meta[updated]" id="addon-stamp" value="'.floatval( $upd_stamp ).'">';
-			echo '&nbsp;<label class="gppr-num-label" for="addon-updated">'.__( 'Updated', '' ).'</label>';
+		echo '<p class="repo-side-field repo-updated-field">';
+			echo '<input type="text" name="" id="repo-updated" class="repo-item-num-text" value="'.$upd_show.'">';
+			echo '<input type="hidden" name="repo-meta[updated]" id="repo-stamp" value="'.floatval( $upd_stamp ).'">';
+			echo '&nbsp;<label class="repo-item-label" for="repo-updated">'.__( 'Updated', '' ).'</label>';
 		echo '</p>';
 
 	}
@@ -250,16 +250,16 @@ class GP_Pro_Remote_Updater_Admin
 	 * @return
 	 */
 
-	public function save_addon_meta( $post_id ) {
+	public function save_repo_item_meta( $post_id ) {
 
 		// run various checks to make sure we aren't doing anything weird
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
 			return $post_id;
 
-		if ( ! isset( $_POST['gpadd_meta_nonce'] ) || ! wp_verify_nonce( $_POST['gpadd_meta_nonce'], 'gpadd_meta_nonce' ) )
+		if ( ! isset( $_POST['rkv_repo_meta_nonce'] ) || ! wp_verify_nonce( $_POST['rkv_repo_meta_nonce'], 'rkv_repo_meta_nonce' ) )
 			return $post_id;
 
-		if ( 'gppro-addons' !== $_POST['post_type'] )
+		if ( 'repo-items' !== $_POST['post_type'] )
 			return $post_id;
 
 		if ( !current_user_can( 'edit_post', $post_id ) )
@@ -267,13 +267,13 @@ class GP_Pro_Remote_Updater_Admin
 
 
 		// get data via $_POST and store it
-		$data	= $_POST['addon-meta'];
+		$data	= $_POST['repo-meta'];
 
 		if ( isset( $data ) && ! empty( $data ) )
-			update_post_meta( $post_id, '_gpp_addon_data', $data );
+			update_post_meta( $post_id, '_rkv_repo_data', $data );
 
 		if ( ! isset( $data ) || isset( $data ) && empty( $data ) )
-			delete_post_meta( $post_id, '_gpp_addon_data' );
+			delete_post_meta( $post_id, '_rkv_repo_data' );
 
 
 
@@ -287,11 +287,11 @@ class GP_Pro_Remote_Updater_Admin
 
 	public function _register_types() {
 
-		register_post_type( 'gppro-addons',
+		register_post_type( 'repo-items',
 			array(
 				'labels'	=> array(
-					'name' 					=> __( 'Add Ons',					'' ),
-					'singular_name' 		=> __( 'Add On',					'' ),
+					'name' 					=> __( 'Repository',				'' ),
+					'singular_name' 		=> __( 'Item',						'' ),
 					'add_new'				=> __( 'Add New Item',				'' ),
 					'add_new_item'			=> __( 'Add New Item',				'' ),
 					'edit'					=> __( 'Edit',						'' ),
@@ -311,7 +311,7 @@ class GP_Pro_Remote_Updater_Admin
 				'hierarchical'		=> false,
 				'menu_position'		=> null,
 				'capability_type'	=> 'post',
-				'menu_icon'			=> 'dashicons-art',
+				'menu_icon'			=> 'dashicons-share-alt',
 				'query_var'			=> true,
 				'rewrite'			=> false,
 				'has_archive'		=> false,

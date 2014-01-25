@@ -28,7 +28,7 @@ class Reaktiv_Remote_Repo {
 	const VERSION = '0.0.1';
 
 	/**
-	 * Setup the updater API
+	 * Setup the construct
 	 *
 	 * @author Andrew Norcross
 	 * @since 0.0.1
@@ -79,7 +79,7 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function get_product_id( $product ) {
 
-		$data	= get_page_by_title( urldecode( $product ), OBJECT, 'gppro-addons' );
+		$data	= get_page_by_title( urldecode( $product ), OBJECT, 'repo-items' );
 
 		if ( ! $data )
 			return;
@@ -96,7 +96,7 @@ class Reaktiv_Remote_Repo {
 	public function get_product_data( $product_id, $meta = false ) {
 
 		// get the data array
-		$data		= get_post_meta( $product_id, '_gpp_addon_data', true );
+		$data		= get_post_meta( $product_id, '_rkv_repo_data', true );
 
 		$package		= isset( $data['package'] )		&& ! empty( $data['package'] )		? esc_url( $data['package'] )		: '';
 		$location		= isset( $data['location'] )	&& ! empty( $data['location'] )		? esc_url( $data['location'] )		: '';

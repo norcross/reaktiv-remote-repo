@@ -1,9 +1,9 @@
-input.gppr-file-text {
+input.repo-item-file-text {
 	width: 75%;
 	margin-right: 10px;
 }
 
-textarea.gppr-textarea {
+textarea.repo-item-textarea {
 	width: 75%;
 	min-height: 100px;
     overflow: auto;
@@ -11,11 +11,11 @@ textarea.gppr-textarea {
     resize: vertical;
 }
 
-input.gppr-num-text {
+input.repo-item-num-text {
 	width: 40%;
 }
 
-label.gppr-num-label {
+label.repo-item-label {
 	width: 60%;
 }
 
