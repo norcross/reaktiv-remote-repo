@@ -221,35 +221,32 @@ class RKV_Remote_Updater {
 				'key'			=> $data['key'],
 				'product'		=> $data['product'],
 				'version'		=> $data['version'],
-				'slug' 			=> $this->slug,
+				'slug' 			=> $data['slug'],
 			),
 		);
 
 		$request = wp_remote_post( $this->api_url, $api_args );
 
-		if ( ! is_wp_error( $request ) ):
-
-			$response = json_decode( wp_remote_retrieve_body( $request ) );
-
-			if ( is_object( $response ) && !empty( $response ) ) :
-
-				// Create response data object
-				$updates = new stdClass;
-				$updates->new_version	= $response->new_version;
-				$updates->package		= $response->package;
-				$updates->slug			= $this->slug;
-				$updates->url			= $this->api_url;
-
-
-				return $updates;
-
-			endif;
-
-		else:
-
+		// bail if my request is dead
+		if ( is_wp_error( $request ) )
 			return false;
 
-		endif;
+		// decode the JSON I sent back and make sure it's an array instead of object
+		$response = json_decode( wp_remote_retrieve_body( $request ), true );
+
+		// bail if I don't have an array, or if its empty
+		if ( ! is_array( $response ) || is_array( $response ) && empty( $response ) )
+			return false;
+
+		// Create response data object
+		$updates = new stdClass;
+		$updates->slug			= $response['slug'];
+		$updates->url			= $response['url'];
+		$updates->new_version	= $response['new_version'];
+		$updates->package		= $response['package'];
+		$updates->sections		= $response['sections'];
+
+		return $updates;
 
 	}
 

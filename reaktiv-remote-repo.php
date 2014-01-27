@@ -12,6 +12,7 @@ Contributors: norcross
 
 
 include( 'lib/admin.php' );
+//include( 'lib/parse.php' );
 
 /**
  * Reaktiv_Remote_Repo Class
@@ -330,24 +331,88 @@ class Reaktiv_Remote_Repo {
 	}
 
 	/**
+	 * convert WP based markdown into actual text
+	 * @param  [type] $input [description]
+	 * @return [type]        [description]
+	 */
+	public function markdown( $input ) {
+
+
+
+		return $input;
+
+	}
+
+	/**
+	 * Sanitize Plugin Sections Data just to make sure it's proper data.
+	 * This is a helper function to sanitize plugin sections data to send to user site.
+	 * @since 0.1.0
+	 * @return string of sanitized section data
+	 */
+	public function sanitize_section_data( $input ) {
+
+		/* allowed tags */
+		$sections_allowedtags = array(
+			'a' => array( 'href' => array(), 'title' => array(), 'target' => array() ),
+			'abbr' => array( 'title' => array() ), 'acronym' => array( 'title' => array() ),
+			'code' => array(), 'pre' => array(), 'em' => array(), 'strong' => array(),
+			'div' => array(), 'p' => array(), 'ul' => array(), 'ol' => array(), 'li' => array(),
+			'h1' => array(), 'h2' => array(), 'h3' => array(), 'h4' => array(), 'h5' => array(), 'h6' => array(),
+			'img' => array( 'src' => array(), 'class' => array(), 'alt' => array() )
+		);
+
+		$output = wp_kses( $input, $sections_allowedtags );
+//		$output	= $this->markdown( $output );
+
+		return $output;
+	}
+
+	/**
+	 * Plugin Sections
+	 * @since 0.1.0
+	 * @return array of plugin sections
+	 */
+	public function plugin_sections( $data ) {
+
+		// run my checks and fetch data
+		$description	= isset( $data['description'] ) && ! empty( $data['description'] )	? $data['description']	: '';
+		$faq			= isset( $data['faq'] ) 		&& ! empty( $data['faq'] ) 			? $data['faq']			: '';
+		$screenshots	= isset( $data['screenshots'] ) && ! empty( $data['screenshots'] )	? $data['screenshots']	: '';
+		$changelog		= isset( $data['changelog'] ) 	&& ! empty( $data['changelog'] )	? $data['changelog']	: '';
+		$other_notes	= isset( $data['other_notes'] )	&& ! empty( $data['other_notes'] )	? $data['other_notes']	: '';
+
+		// build sections
+		$sections = array(
+			'description'	=> $this->sanitize_section_data( $description ),
+			'faq'			=> $this->sanitize_section_data( $faq ),
+			'screenshots'	=> $this->sanitize_section_data( $screenshots ),
+			'changelog'		=> $this->sanitize_section_data( $changelog ),
+			'other_notes'	=> $this->sanitize_section_data( $other_notes ),
+		);
+
+		// send it back
+		return $sections;
+	}
+
+	/**
 	 * [process_plugin_details description]
 	 * @return [type] [description]
 	 */
 	public function process_plugin_details( $product_data, $slug ) {
 
+		$sections	= $this->plugin_sections( $product_data );
+
 		$response	= array(
-			'slug'			=> $slug,
 			'plugin_name'	=> $slug,
+			'slug'			=> $slug,
+			'url'			=> $product_data['location'],
 			'new_version'	=> $product_data['version'],
 			'requires'		=> $product_data['requires'],
 			'tested'		=> $product_data['tested'],
 			'last_updated'	=> $product_data['updated'],
 			'package'		=> $product_data['package'],
-			'sections' 		=> array(
-				'description'	=> $product_data['description'],
-				'changelog'		=> $product_data['changelog'],
-			),
 			'download_link' => $product_data['location'],
+			'sections'		=> $sections,
 		);
 
 		$response	= apply_filters( 'rkv_remote_repo_plugin_details', $response );
@@ -378,13 +443,8 @@ class Reaktiv_Remote_Repo {
 		if ( ! $product_data )
 			return;
 
-		// run process based on action request
-		if ( $wp_query->query_vars['action'] == 'plugin_latest_version' )
-			$process	= $this->process_update_check( $product_data, $wp_query->query_vars['slug'] );
-
-		if ( $wp_query->query_vars['action'] == 'plugin_information' )
-			$process	= $this->process_plugin_details( $product_data, $wp_query->query_vars['slug'] );
-
+		// run process
+		$process	= $this->process_plugin_details( $product_data, $wp_query->query_vars['slug'] );
 
 		// Send out data to the output function
 		$this->output( $process );

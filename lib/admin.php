@@ -159,6 +159,8 @@ class GP_Pro_Remote_Updater_Admin
 		$location		= isset( $data['location'] )	&& ! empty( $data['location'] )		? $data['location']		: '';
 		$description	= isset( $data['description'] )	&& ! empty( $data['description'] )	? $data['description']	: '';
 		$changelog		= isset( $data['changelog'] )	&& ! empty( $data['changelog'] )	? $data['changelog']	: '';
+		$faq			= isset( $data['faq'] )			&& ! empty( $data['faq'] )			? $data['faq']			: '';
+		$other_notes	= isset( $data['other_notes'] )	&& ! empty( $data['other_notes'] )	? $data['other_notes']	: '';
 
 
 		// build table
@@ -205,6 +207,24 @@ class GP_Pro_Remote_Updater_Admin
 			echo '<td>';
 				echo '<textarea name="repo-meta[changelog]" id="repo-changelog" class="repo-item-textarea code">'.esc_attr( $changelog ).'</textarea>';
 				echo '<p class="description">'.__( 'Changelog updates', '' ).'</p>';
+			echo '</td>';
+		echo '</tr>';
+
+		echo '<tr class="repo-faq-field">';
+			echo '<th>';
+				echo '<label for="repo-faq">'.__( 'FAQ', '' ).'</label>';
+			echo '</th>';
+			echo '<td>';
+				echo '<textarea name="repo-meta[faq]" id="repo-faq" class="repo-item-textarea code">'.esc_attr( $faq ).'</textarea>';
+			echo '</td>';
+		echo '</tr>';
+
+		echo '<tr class="repo-othernotes-field">';
+			echo '<th>';
+				echo '<label for="repo-othernotes">'.__( 'Other Notes', '' ).'</label>';
+			echo '</th>';
+			echo '<td>';
+				echo '<textarea name="repo-meta[other_notes]" id="repo-othernotes" class="repo-item-textarea code">'.esc_attr( $other_notes ).'</textarea>';
 			echo '</td>';
 		echo '</tr>';
 
