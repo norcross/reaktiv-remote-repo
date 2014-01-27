@@ -342,11 +342,12 @@ class Reaktiv_Remote_Repo {
 			'requires'		=> $product_data['requires'],
 			'tested'		=> $product_data['tested'],
 			'last_updated'	=> $product_data['updated'],
+			'package'		=> $product_data['package'],
 			'sections' 		=> array(
 				'description'	=> $product_data['description'],
 				'changelog'		=> $product_data['changelog'],
 			),
-			'download_link' => $product_data['package'],
+			'download_link' => $product_data['location'],
 		);
 
 		$response	= apply_filters( 'rkv_remote_repo_plugin_details', $response );
