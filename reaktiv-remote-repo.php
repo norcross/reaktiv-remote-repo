@@ -9,10 +9,14 @@ Author URI:  http://andrewnorcross.com
 Contributors: norcross
 */
 
+if ( ! defined( 'RKV_REPO_PLUGIN_DIR' ) )
+	define( 'RKV_REPO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+
 
 
 include( 'lib/admin.php' );
-//include( 'lib/parse.php' );
+//	include_once( 'lib/parse-readme.php' );
+//	include( 'lib/parse.php' );
 
 /**
  * Reaktiv_Remote_Repo Class
@@ -335,9 +339,9 @@ class Reaktiv_Remote_Repo {
 	 * @param  [type] $input [description]
 	 * @return [type]        [description]
 	 */
-	public function markdown( $input ) {
+	static function markdown( $input ) {
 
-
+		$input	= str_replace( '', '', $input );
 
 		return $input;
 
@@ -351,6 +355,8 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function sanitize_section_data( $input ) {
 
+//		$input	= self::markdown( $input );
+
 		/* allowed tags */
 		$sections_allowedtags = array(
 			'a' => array( 'href' => array(), 'title' => array(), 'target' => array() ),
@@ -362,7 +368,6 @@ class Reaktiv_Remote_Repo {
 		);
 
 		$output = wp_kses( $input, $sections_allowedtags );
-//		$output	= $this->markdown( $output );
 
 		return $output;
 	}

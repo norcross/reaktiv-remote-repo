@@ -41,7 +41,7 @@ class GP_Pro_Remote_Updater_Admin
 
 			wp_enqueue_media();
 			wp_enqueue_script( 'datepick',	plugins_url( '/js/jquery.datepick.min.js', __FILE__ ),	array('jquery'),	null, true	);
-			wp_enqueue_script( 'rkv-repo', plugins_url( '/js/rkv.repo.admin.js', __FILE__ ) , array( 'jquery' ), null, true );
+			wp_enqueue_script( 'rkv-repo', plugins_url( '/js/rkv.repo.admin.js', __FILE__ ) , array( 'jquery', 'jquery-ui-sortable' ), null, true );
 			wp_localize_script( 'rkv-repo', 'rkvAsset', array(
 				'icon' => '<i class="dashicons dashicons-calendar rkv-cal-icon"></i>',
 			));
@@ -136,8 +136,8 @@ class GP_Pro_Remote_Updater_Admin
 
 	public function create_metaboxes() {
 
-		add_meta_box( 'repo-items-file', __( 'File Details', '' ), array( $this, 'file_details' ), 'repo-items', 'normal', 'high' );
-		add_meta_box( 'repo-items-side', __( 'Version Details', '' ), array( $this, 'version_details' ), 'repo-items', 'side', 'low' );
+		add_meta_box( 'rp-items-file', 	__( 'File Details', '' ),	array( $this, 'file_details' ),		'repo-items', 'normal', 'high'	);
+		add_meta_box( 'rp-items-side', 	__( 'Version Info', '' ),	array( $this, 'version_details' ),	'repo-items', 'side',	'low'	);
 
 	}
 
@@ -160,6 +160,7 @@ class GP_Pro_Remote_Updater_Admin
 		$description	= isset( $data['description'] )	&& ! empty( $data['description'] )	? $data['description']	: '';
 		$changelog		= isset( $data['changelog'] )	&& ! empty( $data['changelog'] )	? $data['changelog']	: '';
 		$faq			= isset( $data['faq'] )			&& ! empty( $data['faq'] )			? $data['faq']			: '';
+		$screenshots	= isset( $data['screenshots'] )	&& ! empty( $data['screenshots'] )	? $data['screenshots']	: '';
 		$other_notes	= isset( $data['other_notes'] )	&& ! empty( $data['other_notes'] )	? $data['other_notes']	: '';
 
 
@@ -219,6 +220,39 @@ class GP_Pro_Remote_Updater_Admin
 			echo '</td>';
 		echo '</tr>';
 
+		echo '<tr class="repo-screenshots-field">';
+			echo '<th>';
+				echo '<label for="repo-screenshots">'.__( 'Screenshots', '' ).'</label>';
+			echo '</th>';
+			echo '<td>';
+				echo '<p class="uploader-info">';
+					echo '<span class="dashicons dashicons-upload rkv-screenshot-uploader"></span>';
+					echo __( 'Click to upload screenshots', '' );
+					echo '<span class="spinner screenshot-spinner"></span>';
+				echo '</p>';
+
+				echo '<div class="repo-screenshot-gallery">';
+				if ( ! empty ( $screenshots ) ) :
+				foreach ( $screenshots as $image_id ) :
+					$image	= wp_get_attachment_image_src( $image_id, 'thumbnail' );
+					echo '<div class="screenshot-item" data-image="'.absint( $image_id ).'">';
+						echo '<img class="screenshot-image" src="'. esc_url( $image[0] ) .'" />';
+						echo '<span class="dashicons dashicons-no-alt screenshot-remove"></span>';
+					echo '</div>';
+				endforeach;
+				endif;
+				echo '</div>';
+
+				echo '<div class="repo-screenshot-ids">';
+				if ( ! empty ( $screenshots ) ) :
+				foreach ( $screenshots as $image_id ) :
+					echo '<input type="hidden" class="screenshot-id" name="repo-meta[screenshots][]" value="'.absint( $image_id ).'" data-image="'.absint( $image_id ).'" />';
+				endforeach;
+				endif;
+				echo '</div>';
+			echo '</td>';
+		echo '</tr>';
+
 		echo '<tr class="repo-othernotes-field">';
 			echo '<th>';
 				echo '<label for="repo-othernotes">'.__( 'Other Notes', '' ).'</label>';
@@ -232,6 +266,7 @@ class GP_Pro_Remote_Updater_Admin
 		echo '</table>';
 
 	}
+
 
 	/**
 	 * build metabox for side data

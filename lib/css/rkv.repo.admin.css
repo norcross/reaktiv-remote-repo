@@ -31,6 +31,56 @@ p.repo-updated-field .rkv-cal-icon {
 	cursor: pointer;
 }
 
+tr.repo-screenshots-field p.uploader-info {
+	cursor: pointer;
+	margin: 0 0 1em;
+}
+
+tr.repo-screenshots-field span.rkv-screenshot-uploader {
+	cursor: pointer;
+	margin: 0 3px 0 0;
+}
+
+tr.repo-screenshots-field span.screenshot-spinner {
+	visibility: hidden;
+	display: inline-block;
+	vertical-align: top;
+	float: none;
+	position: relative;
+	left: 20px;
+	top: -1px;
+}
+
+div.repo-screenshot-gallery div.screenshot-item {
+	display: inline-block;
+	vertical-align: top;
+	position: relative;
+	width: 92px;
+}
+
+div.repo-screenshot-gallery div.screenshot-item img.screenshot-image {
+	width: 80px;
+	height: 80px;
+	padding: 2px;
+	border: 1px solid #ccc;
+	margin: 0 10px 0 0;
+}
+
+div.repo-screenshot-gallery div.screenshot-item span.screenshot-remove {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	cursor: pointer;
+	padding: 2px;
+	background: #efefef;
+	border: 1px solid #ccc;
+	color: #ff0000;
+	border-radius: 50%;
+	font-size: 14px;
+	height: 14px;
+	width: 14px;
+}
+
 
 
 /* Default styling for jQuery Datepicker v4.0.6. */
