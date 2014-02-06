@@ -58,6 +58,7 @@ class RKV_Remote_Updater {
 
 	}
 
+
 	/**
 	 * run transient check
 	 * @param  [type] $transient [description]
@@ -75,8 +76,13 @@ class RKV_Remote_Updater {
 
 		if( false !== $api_response && is_object( $api_response ) ) {
 
-			if( version_compare( $this->version, $api_response->new_version, '<' ) )
+			if( version_compare( $this->version, $api_response->new_version, '<' ) ) {
 				$_transient_data->response[$this->name] = $api_response;
+
+				// add our update row piece
+				$name	= $this->name;
+				add_action( "after_plugin_row_$name", 'wp_plugin_update_row', 10, 2 );
+			}
 
 		}
 
@@ -112,7 +118,6 @@ class RKV_Remote_Updater {
 	/**
 	 * Calls the API and, if successfull, returns the object delivered by the API.
 	 *
-	 * @uses get_bloginfo()
 	 * @uses wp_remote_post()
 	 * @uses is_wp_error()
 	 *
@@ -121,8 +126,6 @@ class RKV_Remote_Updater {
 	 * @return false||object
 	 */
 	private function api_request( $_action, $_data ) {
-
-		global $wp_version;
 
 		$data = array_merge( $this->api_data, $_data );
 
@@ -169,9 +172,11 @@ class RKV_Remote_Updater {
 		if ( $_action == 'plugin_information' )
 			$updates	= self::get_information_response( $response );
 
+		// bail if we have nothing
 		if ( ! $updates )
 			return false;
 
+		// send it back
 		return $updates;
 
 	}

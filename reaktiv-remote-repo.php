@@ -74,6 +74,7 @@ class Reaktiv_Remote_Repo {
 	 * @return array $vars New query vars
 	 */
 	public function query_vars( $vars ) {
+
 		$vars[] = 'product';
 		$vars[] = 'version';
 		$vars[] = 'action';
@@ -247,8 +248,11 @@ class Reaktiv_Remote_Repo {
 		// make sure we have an array first
 		$screenshots	= (array) $data['screenshots'];
 
+		// set the image size to return via filter
+		$image_size	= apply_filters( 'rkv_remote_repo_screenshot_size', 'medium' );
+
 		foreach ( $screenshots as $image_id ) :
-			$file_data	= wp_get_attachment_image_src( $image_id, 'medium' );
+			$file_data	= wp_get_attachment_image_src( $image_id, $image_size );
 			$file_name	= get_the_title( $image_id );
 
 			$image_data[]	= array(
@@ -442,10 +446,10 @@ class Reaktiv_Remote_Repo {
 		$add_show		= ! empty( $add_stamp ) ? date( 'Y-m-d', floatval( $add_stamp ) ) : '';
 		$upd_show		= ! empty( $upd_stamp ) ? date( 'Y-m-d', floatval( $upd_stamp ) ) : '';
 
-
 		// fetch our screenshots
 		$screenshots	= self::screenshot_data( $data );
 
+		// build out the big array
 		$product_data	= array(
 			'package'		=> $package,
 			'homepage'		=> $homepage,
