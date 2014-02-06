@@ -75,7 +75,7 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function query_vars( $vars ) {
 
-		$vars[] = 'product';
+		$vars[] = 'item';
 		$vars[] = 'version';
 		$vars[] = 'action';
 		$vars[] = 'slug';
@@ -88,12 +88,12 @@ class Reaktiv_Remote_Repo {
 
 	/**
 	 * confirm the product being passed exists
-	 * @param  string $product product name
+	 * @param  string $name product name
 	 * @return string product ID or null
 	 */
-	public function get_product_id( $product ) {
+	static function get_product_id( $name ) {
 
-		$data	= get_page_by_title( urldecode( $product ), OBJECT, 'repo-items' );
+		$data	= get_page_by_title( urldecode( $name ), OBJECT, 'repo-items' );
 
 		if ( ! $data )
 			return;
@@ -152,12 +152,12 @@ class Reaktiv_Remote_Repo {
 		endif;
 
 		// check for missing product name
-		if ( ! isset( $wp_query->query_vars['product'] ) ) :
+		if ( ! isset( $wp_query->query_vars['name'] ) ) :
 
 			$response	= array(
 				'success'		=> false,
-				'error_code'	=> 'PRODUCT_NAME_MISSING',
-				'message'		=> 'No product name has been supplied.'
+				'error_code'	=> 'ITEM_NAME_MISSING',
+				'message'		=> 'No item name has been supplied.'
 			);
 
 			$this->output( $response );
@@ -170,8 +170,8 @@ class Reaktiv_Remote_Repo {
 
 			$response	= array(
 				'success'		=> false,
-				'error_code'	=> 'PRODUCT_VERSION_MISSING',
-				'message'		=> 'No product version has been supplied.'
+				'error_code'	=> 'ITEM_VERSION_MISSING',
+				'message'		=> 'No item version has been supplied.'
 			);
 
 			$this->output( $response );
@@ -180,13 +180,13 @@ class Reaktiv_Remote_Repo {
 		endif;
 
 		// check if the product exists
-		$product_id	= $this->get_product_id( $wp_query->query_vars['product'] );
+		$product_id	= self::get_product_id( $wp_query->query_vars['item'] );
 		if ( ! $product_id ) :
 
 			$response	= array(
 				'success'		=> false,
-				'error_code'	=> 'NOT_VALID_PRODUCT',
-				'message'		=> 'The provided name does not match a valid product.'
+				'error_code'	=> 'NOT_VALID_ITEM',
+				'message'		=> 'The provided name does not match a valid item.'
 			);
 
 			$this->output( $response );
@@ -512,16 +512,19 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function process_plugin_version( $data, $slug ) {
 
-		$response	= array(
+		$fields	= array(
 			'slug'					=> $slug,
 			'new_version'			=> $data['version'],
 			'url'					=> $data['homepage'],
 			'package'				=> $data['package'],
 		);
 
-		$response	= apply_filters( 'rkv_remote_repo_plugin_version', $response, $slug );
+		$fields	= apply_filters( 'rkv_remote_repo_plugin_version', $fields, $slug );
 
-		return $response;
+		return array(
+			'success'	=> true,
+			'fields'	=> $fields
+		);
 
 	}
 
@@ -535,7 +538,7 @@ class Reaktiv_Remote_Repo {
 
 		$sections	= self::get_display_sections( $data );
 
-		$response	= array(
+		$fields	= array(
 			'name'					=> $data['name'],
 			'slug'					=> $slug,
 			'version'				=> $data['version'],
@@ -555,9 +558,12 @@ class Reaktiv_Remote_Repo {
 		);
 
 
-		$response	= apply_filters( 'rkv_remote_repo_plugin_details', $response, $slug );
+		$fields	= apply_filters( 'rkv_remote_repo_plugin_details', $fields, $slug );
 
-		return $response;
+		return array(
+			'success'	=> true,
+			'fields'	=> $fields
+		);
 
 	}
 

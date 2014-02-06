@@ -1,7 +1,7 @@
 <?php
 
 // uncomment this line for testing
-set_site_transient( 'update_plugins', false );
+// set_site_transient( 'update_plugins', false );
 
 
 /**
@@ -137,11 +137,10 @@ class RKV_Remote_Updater {
 			'timeout'	=> 15,
 			'sslverify' => false,
 			'body'		=> array(
-				'action'		=> $_action,
-				'key'			=> $data['key'],
-				'product'		=> $data['product'],
-				'version'		=> $data['version'],
-				'slug' 			=> $data['slug'],
+				'action'	=> $_action,
+				'item'		=> $data['item'],
+				'version'	=> $data['version'],
+				'slug' 		=> $data['slug'],
 			),
 		);
 
@@ -162,15 +161,24 @@ class RKV_Remote_Updater {
 		if ( ! is_array( $response ) || is_array( $response ) && empty( $response ) )
 			return false;
 
+		// bail if the success is false
+		if ( ! isset( $response['success'] ) || ! $response['success'] )
+			return false;
+
+		// bail if the success is false
+		if ( ! isset( $response['fields'] ) || isset( $response['fields'] ) && empty( $response['fields'] ) )
+			return false;
+
+		// now run the update return based on request
 		$updates	= false;
 
 		// build and return the basic info
 		if ( $_action == 'plugin_latest_version' )
-			$updates	= self::get_version_response( $response );
+			$updates	= self::get_version_response( $response['fields'] );
 
 		// build the larger return for updates
 		if ( $_action == 'plugin_information' )
-			$updates	= self::get_information_response( $response );
+			$updates	= self::get_information_response( $response['fields'] );
 
 		// bail if we have nothing
 		if ( ! $updates )
