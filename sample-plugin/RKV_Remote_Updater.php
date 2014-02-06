@@ -129,9 +129,15 @@ class RKV_Remote_Updater {
 
 		$data = array_merge( $this->api_data, $_data );
 
-		if( $data['slug'] != $this->slug )
+		// make sure we're checking the right thing
+		if( ! isset( $data['slug'] ) || $data['slug'] != $this->slug )
 			return;
 
+		// check for array elements, bail if missing
+		if ( ! isset( $data['item'] ) || ! isset( $data['version'] ) )
+			return;
+
+		// build array
 		$api_args = array(
 			'method'	=> 'POST',
 			'timeout'	=> 15,
@@ -144,6 +150,7 @@ class RKV_Remote_Updater {
 			),
 		);
 
+		// send request
 		$request = wp_remote_post( $this->api_url, $api_args );
 
 		// bail if my request can't connect
