@@ -15,8 +15,9 @@ if ( ! defined( 'RKV_REPO_PLUGIN_DIR' ) )
 
 
 include( 'lib/admin.php' );
-//	include_once( 'lib/parse-readme.php' );
-//	include( 'lib/parse.php' );
+include( 'lib/postmeta.php' );
+include( 'lib/parse.php' );
+
 
 /**
  * Reaktiv_Remote_Repo Class
@@ -75,7 +76,6 @@ class Reaktiv_Remote_Repo {
 	public function query_vars( $vars ) {
 		$vars[] = 'product';
 		$vars[] = 'version';
-		$vars[] = 'key';
 		$vars[] = 'action';
 		$vars[] = 'slug';
 
@@ -98,61 +98,6 @@ class Reaktiv_Remote_Repo {
 			return;
 
 		return $data->ID;
-
-	}
-
-	/**
-	 * fetch the product data
-	 * @param  int $product_id product ID
-	 * @return array
-	 */
-	public function get_product_data( $product_id, $meta = false ) {
-
-		// get the data array
-		$data		= get_post_meta( $product_id, '_rkv_repo_data', true );
-
-		$package		= isset( $data['package'] )		&& ! empty( $data['package'] )		? esc_url( $data['package'] )		: '';
-		$location		= isset( $data['location'] )	&& ! empty( $data['location'] )		? esc_url( $data['location'] )		: '';
-		$description	= isset( $data['description'] )	&& ! empty( $data['description'] )	? esc_attr( $data['description'] )	: '';
-		$changelog		= isset( $data['changelog'] )	&& ! empty( $data['changelog'] )	? esc_attr( $data['changelog'] )	: '';
-		$version		= isset( $data['version'] )		&& ! empty( $data['version'] )		? esc_attr( $data['version'] )		: '';
-		$requires		= isset( $data['requires'] )	&& ! empty( $data['requires'] )		? esc_attr( $data['requires'] )		: '';
-		$tested			= isset( $data['tested'] )		&& ! empty( $data['tested'] )		? esc_attr( $data['tested'] )		: '';
-		$upd_stamp		= isset( $data['updated'] )		&& ! empty( $data['updated'] )		? intval( $data['updated'] )		: '';
-		$upd_show		= ! empty( $upd_stamp ) ? date( 'Y-m-d', $upd_stamp ) : '';
-
-
-		$product_data	= array(
-			'package'		=> $package,
-			'location'		=> $location,
-			'description'	=> $description,
-			'changelog'		=> $changelog,
-			'version'		=> $version,
-			'tested'		=> $tested,
-			'requires'		=> $requires,
-			'updated'		=> $upd_show,
-		);
-
-		$product_data	= apply_filters( 'rkv_remote_repo_product_data', $product_data, $product_id );
-
-		// return single bit of info if requested
-		if ( $meta && isset( $product_data[ $meta ] ) )
-			return $product_data[ $meta ];
-
-		return $product_data;
-
-	}
-
-
-	/**
-	 * check the product version being passed
-	 * @param  string $version      version being checked
-	 * @param  array $product_data  array of item data
-	 * @return bool
-	 */
-	public function compare_versions( $version, $product_vers ) {
-
-		return version_compare( $product_vers, $version , '>' );
 
 	}
 
@@ -184,20 +129,6 @@ class Reaktiv_Remote_Repo {
 				'success'		=> false,
 				'error_code'	=> 'ACTION_INCORRECT',
 				'message'		=> 'The declared action was not understood.'
-			);
-
-			$this->output( $response );
-			return false;
-
-		endif;
-
-		// check for missing key
-		if ( ! isset( $wp_query->query_vars['key'] ) ) :
-
-			$response	= array(
-				'success'		=> false,
-				'error_code'	=> 'KEY_MISSING',
-				'message'		=> 'The required API key was not provided.'
 			);
 
 			$this->output( $response );
@@ -293,22 +224,10 @@ class Reaktiv_Remote_Repo {
 
 		endif;
 
-		// check if the product version requires an update
-		$version_compare	= $this->compare_versions( $wp_query->query_vars['version'], $product_data['version'] );
-		if ( ! $version_compare ) :
-
-			$response	= array(
-				'success'		=> false,
-				'error_code'	=> 'NO_UPDATE_REQUIRED',
-				'message'		=> 'The product is up to date.'
-			);
-
-			$this->output( $response );
-			return false;
-
-		endif;
-
 		/* TODO add custom validation method */
+
+		// add some shit to the array
+		$product_data['name']		= get_the_title( $product_id );
 
 		// all checks passed, return product file
 		return $product_data;
@@ -316,36 +235,44 @@ class Reaktiv_Remote_Repo {
 	}
 
 	/**
-	 * [process_update_check description]
-	 * @return [type] [description]
+	 * [screenshot_layout description]
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
 	 */
-	public function process_update_check( $product_data, $slug ) {
+	static function screenshot_data( $data ) {
 
-		$response	= array(
-			'slug'			=> $slug,
-			'new_version'	=> $product_data['version'],
-			'url'			=> $product_data['location'],
-			'package'		=> $product_data['package'],
-		);
+		if ( ! isset( $data['screenshots'] ) || isset( $data['screenshots'] ) && empty( $data['screenshots'] ) )
+			return;
 
-		$response	= apply_filters( 'rkv_remote_repo_update_check', $response );
+		// make sure we have an array first
+		$screenshots	= (array) $data['screenshots'];
 
-		return $response;
+		foreach ( $screenshots as $image_id ) :
+			$file_data	= wp_get_attachment_image_src( $image_id, 'medium' );
+			$file_name	= get_the_title( $image_id );
+
+			$image_data[]	= array(
+				'url'	=> $file_data[0],
+				'name'	=> $file_name
+			);
+		endforeach;
+
+
+		$display	= '';
+
+		$display	.= '<ol>';
+		foreach ( $image_data as $image ) :
+			$display	.= '<li>';
+			$display	.= '<img src="'.esc_url( $image['url'] ).'">';
+			$display	.= '<p>'.esc_attr( $image['name'] ).'</p>';
+			$display	.= '</li>';
+		endforeach;
+		$display	.= '</ol>';
+
+		return $display;
 
 	}
 
-	/**
-	 * convert WP based markdown into actual text
-	 * @param  [type] $input [description]
-	 * @return [type]        [description]
-	 */
-	static function markdown( $input ) {
-
-		$input	= str_replace( '', '', $input );
-
-		return $input;
-
-	}
 
 	/**
 	 * Sanitize Plugin Sections Data just to make sure it's proper data.
@@ -353,12 +280,10 @@ class Reaktiv_Remote_Repo {
 	 * @since 0.1.0
 	 * @return string of sanitized section data
 	 */
-	public function sanitize_section_data( $input ) {
-
-//		$input	= self::markdown( $input );
+	static function sanitize_section_data( $section ) {
 
 		/* allowed tags */
-		$sections_allowedtags = array(
+		$allowedtags = array(
 			'a' => array( 'href' => array(), 'title' => array(), 'target' => array() ),
 			'abbr' => array( 'title' => array() ), 'acronym' => array( 'title' => array() ),
 			'code' => array(), 'pre' => array(), 'em' => array(), 'strong' => array(),
@@ -367,60 +292,266 @@ class Reaktiv_Remote_Repo {
 			'img' => array( 'src' => array(), 'class' => array(), 'alt' => array() )
 		);
 
-		$output = wp_kses( $input, $sections_allowedtags );
+		$content = wp_kses( $section, $allowedtags );
 
-		return $output;
+		return $content;
 	}
 
 	/**
-	 * Plugin Sections
-	 * @since 0.1.0
-	 * @return array of plugin sections
+	 * [get_parse_data description]
+	 * @param  [type] $section [description]
+	 * @param  [type] $data    [description]
+	 * @return [type]          [description]
 	 */
-	public function plugin_sections( $data ) {
+	static function get_parse_data( $file, $key ) {
 
-		// run my checks and fetch data
-		$description	= isset( $data['description'] ) && ! empty( $data['description'] )	? $data['description']	: '';
-		$faq			= isset( $data['faq'] ) 		&& ! empty( $data['faq'] ) 			? $data['faq']			: '';
-		$screenshots	= isset( $data['screenshots'] ) && ! empty( $data['screenshots'] )	? $data['screenshots']	: '';
-		$changelog		= isset( $data['changelog'] ) 	&& ! empty( $data['changelog'] )	? $data['changelog']	: '';
-		$other_notes	= isset( $data['other_notes'] )	&& ! empty( $data['other_notes'] )	? $data['other_notes']	: '';
+		// load the WP Readme Parser and parse
+		$parser		= new WordPress_Readme_Parser();
+		$readme		= $parser->parse_readme( $file );
+
+		if ( ! $readme )
+			return;
+
+		if ( ! isset( $readme[ $key ] ) || isset( $readme[ $key ] ) && empty( $readme[ $key ] ) )
+			return;
+
+		return $readme[ $key ];
+
+	}
+
+	/**
+	 * [get_section_data description]
+	 * @param  [type] $product_id [description]
+	 * @param  [type] $data       [description]
+	 * @param  [type] $key        [description]
+	 * @return [type]             [description]
+	 */
+	static function get_section_data( $product_id, $data, $key ) {
+
+		// set an initial fallback for the item being requested
+		$item	= isset( $data[ $key ] ) && ! empty( $data[ $key ] ) ? $data[ $key ] : '';
+
+		// run a check for the readme file
+		$check	= get_post_meta( $product_id, '_rkv_repo_readme_file', true );
+		$file	= isset( $data['readme'] ) && ! empty( $data['readme'] ) ? esc_url( $data['readme'] ) : '';
+
+		// if no file, return the backup data
+		if ( ! $check || empty ( $file ) )
+			return $item;
+
+		// check to make sure the readme parse is there
+		if ( ! class_exists( 'WordPress_Readme_Parser' ) )
+			return $item;
+
+		$sections	= self::get_parse_data( $file, 'sections' );
+
+		// bail if we don't have any sections
+		if ( ! isset( $sections ) )
+			return $item;
+
+		// bail if we don't have the section we want
+		if ( ! isset( $sections[ $key ] ) )
+			return $item;
+
+		// run the section content through the filter
+		$content	= self::sanitize_section_data( $sections[ $key ] );
+
+		// return the section being requested
+		return $content;
+
+	}
+
+	/**
+	 * [get_lineitem_data description]
+	 * @param  [type] $product_id [description]
+	 * @param  [type] $data       [description]
+	 * @param  [type] $key        [description]
+	 * @return [type]             [description]
+	 */
+	static function get_lineitem_data( $product_id, $data, $key ) {
+
+		// set an initial fallback for the item being requested
+		$item	= isset( $data[ $key ] ) && ! empty( $data[ $key ] ) ? $data[ $key ] : '';
+
+		// run a check for the readme file
+		$check	= get_post_meta( $product_id, '_rkv_repo_readme_file', true );
+		$file	= isset( $data['readme'] ) && ! empty( $data['readme'] ) ? esc_url( $data['readme'] ) : '';
+
+		// if no file, return the backup data
+		if ( ! $check || empty ( $file ) )
+			return $item;
+
+		// check to make sure the readme parse is there
+		if ( ! class_exists( 'WordPress_Readme_Parser' ) )
+			return $item;
+
+		// do some key swapping
+		$rpkey	= array( 'requires', 'tested' );
+		$rdkey	= array( 'requires_at_least', 'tested_up_to' );
+
+		$key	= str_replace( $rpkey, $rdkey, $key );
+
+		$data	= self::get_parse_data( $file, $key );
+
+		// bail if we don't have anything
+		if ( ! isset( $data ) )
+			return $item;
+
+		return $data;
+
+	}
+
+	/**
+	 * fetch the product data
+	 * @param  int $product_id product ID
+	 * @return array
+	 */
+	public function get_product_data( $product_id, $meta = false ) {
+
+		// get the data array
+		$data		= get_post_meta( $product_id, '_rkv_repo_data', true );
+
+		// get the readme parsed items
+		$description	= self::get_section_data( $product_id, $data, 'description' );
+		$faq			= self::get_section_data( $product_id, $data, 'frequently_asked_questions' );
+		$changelog		= self::get_section_data( $product_id, $data, 'changelog' );
+		$installation	= self::get_section_data( $product_id, $data, 'installation' );
+		$requires		= self::get_lineitem_data( $product_id, $data, 'requires' );
+		$tested			= self::get_lineitem_data( $product_id, $data, 'tested' );
+
+		// pull items from post meta
+		$package	= isset( $data['package'] )			? esc_url( $data['package'] )			: '';
+		$homepage	= isset( $data['homepage'] )		? esc_url( $data['homepage'] )			: '';
+		$version	= isset( $data['version'] )			? esc_html( $data['version'] )			: '';
+		$author		= isset( $data['author'] )			? esc_html( $data['author'] )			: '';
+		$profile	= isset( $data['author_profile'] )	? esc_url( $data['author_profile'] )	: '';
+
+		$rating		= isset( $data['rating'] )			? $data['rating']		: '';
+		$rcount		= isset( $data['num_ratings'] )		? $data['num_ratings']	: '';
+		$dcount		= isset( $data['downloaded'] )		? $data['downloaded']	: '';
+
+		// some fancy contributor stuff
+		$contributors	= isset( $data['contributors'] )	? esc_html( $data['contributors'] )		: '';
+		if ( ! empty( $contributors ) )
+			$contributors	= explode( ',', $contributors );
+
+		// do some fancy timestamp stuff
+		$add_stamp		= isset( $data['added'] )			? $data['added']		: '';
+		$upd_stamp		= isset( $data['last_updated'] )	? $data['last_updated']	: '';
+
+		$add_show		= ! empty( $add_stamp ) ? date( 'Y-m-d', floatval( $add_stamp ) ) : '';
+		$upd_show		= ! empty( $upd_stamp ) ? date( 'Y-m-d', floatval( $upd_stamp ) ) : '';
+
+
+		// fetch our screenshots
+		$screenshots	= self::screenshot_data( $data );
+
+		$product_data	= array(
+			'package'		=> $package,
+			'homepage'		=> $homepage,
+			'description'	=> $description,
+			'faq'			=> $faq,
+			'installation'	=> $installation,
+			'screenshots'	=> $screenshots,
+			'changelog'		=> $changelog,
+			'version'		=> $version,
+			'tested'		=> $tested,
+			'requires'		=> $requires,
+			'added'			=> $add_show,
+			'updated'		=> $upd_show,
+			'author'		=> $author,
+			'profile'		=> $profile,
+			'contributors'	=> $contributors,
+			'rating'		=> $rating,
+			'num_ratings'	=> $rcount,
+			'downloaded'	=> $dcount,
+		);
+
+		$product_data	= apply_filters( 'rkv_remote_repo_product_data', $product_data, $product_id );
+
+		// return single bit of info if requested
+		if ( $meta && isset( $product_data[ $meta ] ) )
+			return $product_data[ $meta ];
+
+		return $product_data;
+
+	}
+
+	/**
+	 * [get_display_sections description]
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
+	 */
+	static function get_display_sections( $data ) {
 
 		// build sections
 		$sections = array(
-			'description'	=> $this->sanitize_section_data( $description ),
-			'faq'			=> $this->sanitize_section_data( $faq ),
-			'screenshots'	=> $this->sanitize_section_data( $screenshots ),
-			'changelog'		=> $this->sanitize_section_data( $changelog ),
-			'other_notes'	=> $this->sanitize_section_data( $other_notes ),
+			'description'	=> $data['description'],
+			'installation'	=> $data['installation'],
+			'screenshots'	=> $data['screenshots'],
+			'changelog'		=> $data['changelog'],
+			'faq'			=> $data['faq'],
 		);
 
-		// send it back
+		$sections	= apply_filters( 'rkv_remote_repo_display_sections', $sections );
+
 		return $sections;
+
+	}
+
+
+	/**
+	 * [process_plugin_version description]
+	 * @param  [type] $data [description]
+	 * @param  [type] $slug [description]
+	 * @return [type]       [description]
+	 */
+	public function process_plugin_version( $data, $slug ) {
+
+		$response	= array(
+			'slug'					=> $slug,
+			'new_version'			=> $data['version'],
+			'url'					=> $data['homepage'],
+			'package'				=> $data['package'],
+		);
+
+		$response	= apply_filters( 'rkv_remote_repo_plugin_version', $response, $slug );
+
+		return $response;
+
 	}
 
 	/**
 	 * [process_plugin_details description]
-	 * @return [type] [description]
+	 * @param  [type] $data [description]
+	 * @param  [type] $slug [description]
+	 * @return [type]       [description]
 	 */
-	public function process_plugin_details( $product_data, $slug ) {
+	public function process_plugin_details( $data, $slug ) {
 
-		$sections	= $this->plugin_sections( $product_data );
+		$sections	= self::get_display_sections( $data );
 
 		$response	= array(
-			'plugin_name'	=> $slug,
-			'slug'			=> $slug,
-			'url'			=> $product_data['location'],
-			'new_version'	=> $product_data['version'],
-			'requires'		=> $product_data['requires'],
-			'tested'		=> $product_data['tested'],
-			'last_updated'	=> $product_data['updated'],
-			'package'		=> $product_data['package'],
-			'download_link' => $product_data['location'],
-			'sections'		=> $sections,
+			'name'					=> $data['name'],
+			'slug'					=> $slug,
+			'version'				=> $data['version'],
+			'author'				=> $data['author'],
+			'author_profile'		=> $data['profile'],
+			'contributors'			=> $data['contributors'],
+			'requires'				=> $data['requires'],
+			'tested'				=> $data['tested'],
+			'rating'				=> $data['rating'],
+			'num_ratings'			=> $data['num_ratings'],
+			'downloaded'			=> $data['downloaded'],
+			'added'					=> $data['added'],
+			'last_updated'			=> $data['updated'],
+			'homepage'				=> $data['homepage'],
+			'download_link'			=> $data['package'],
+			'sections'				=> $sections,
 		);
 
-		$response	= apply_filters( 'rkv_remote_repo_plugin_details', $response );
+
+		$response	= apply_filters( 'rkv_remote_repo_plugin_details', $response, $slug );
 
 		return $response;
 
@@ -444,12 +575,20 @@ class Reaktiv_Remote_Repo {
 			return;
 
 		// run my validation checks
-		$product_data	= $this->validate_request( $wp_query );
-		if ( ! $product_data )
+		$data	= $this->validate_request( $wp_query );
+		if ( ! $data )
 			return;
 
-		// run process
-		$process	= $this->process_plugin_details( $product_data, $wp_query->query_vars['slug'] );
+		$process	= false;
+
+		if ( $wp_query->query_vars['action']	== 'plugin_latest_version' )
+			$process	= $this->process_plugin_version( $data, $wp_query->query_vars['slug'] );
+
+		if ( $wp_query->query_vars['action']	== 'plugin_information' )
+			$process	= $this->process_plugin_details( $data, $wp_query->query_vars['slug'] );
+
+		if ( ! $process )
+			return;
 
 		// Send out data to the output function
 		$this->output( $process );

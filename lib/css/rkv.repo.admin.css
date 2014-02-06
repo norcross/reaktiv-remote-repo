@@ -4,8 +4,8 @@ input.repo-item-file-text {
 }
 
 textarea.repo-item-textarea {
-	width: 75%;
-	min-height: 100px;
+	width: 100%;
+	min-height: 50px;
     overflow: auto;
     vertical-align: top;
     resize: vertical;
@@ -19,11 +19,11 @@ label.repo-item-label {
 	width: 60%;
 }
 
-p.repo-updated-field {
+p.repo-cal-field {
 	position: relative;
 }
 
-p.repo-updated-field .rkv-cal-icon {
+p.repo-cal-field .rkv-cal-icon {
 	position: absolute;
 	right: 152px;
 	top: 8px;
@@ -82,6 +82,10 @@ div.repo-screenshot-gallery div.screenshot-item span.screenshot-remove {
 }
 
 
+tr.repo-readme-notice h4.readme-info-text {
+	margin: 0;
+	font-weight: 400;
+}
 
 /* Default styling for jQuery Datepicker v4.0.6. */
 .datepick {

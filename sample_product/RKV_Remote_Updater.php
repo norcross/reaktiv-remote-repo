@@ -1,7 +1,7 @@
 <?php
 
 // uncomment this line for testing
-set_site_transient( 'update_plugins', null );
+set_site_transient( 'update_plugins', false );
 
 
 /**
@@ -52,10 +52,10 @@ class RKV_Remote_Updater {
 
 	private function hook() {
 
-		add_filter	(	'http_request_args',						array(	$this,	'disable_wporg'		),	5,	2	);
-
 		add_filter	(	'pre_set_site_transient_update_plugins',	array(	$this,	'api_check'			)			);
 		add_filter	(	'plugins_api',								array(	$this,	'api_data'			),	10,	3	);
+		add_filter	(	'http_request_args',						array(	$this,	'disable_wporg'		),	5,	2	);
+
 	}
 
 	/**
@@ -74,98 +74,14 @@ class RKV_Remote_Updater {
 		$api_response = $this->api_request( 'plugin_latest_version', $to_send );
 
 		if( false !== $api_response && is_object( $api_response ) ) {
+
 			if( version_compare( $this->version, $api_response->new_version, '<' ) )
 				$_transient_data->response[$this->name] = $api_response;
+
 		}
 
 		return $_transient_data;
 
-	}
-
-	/**
-	 * Disable request to wp.org plugin repository
-	 * this function is to remove update request data of this plugin to wp.org
-	 * so wordpress would not do update check for this plugin.
-	 *
-	 * @link http://markjaquith.wordpress.com/2009/12/14/excluding-your-plugin-or-theme-from-update-checks/
-	 * @since 0.1.2
-	 */
-	public function disable_wporg( $r, $url ){
-
-		/* WP.org plugin update check URL */
-		$wp_url_string = 'api.wordpress.org/plugins/update-check';
-
-		/* If it's not a plugin update check request, bail early */
-		if ( false === strpos( $url, $wp_url_string ) ){
-			return $r;
-		}
-
-		/* Get this plugin slug */
-		$plugin_slug = dirname( $this->slug );
-
-		/* Get response body (json/serialize data) */
-		$r_body = wp_remote_retrieve_body( $r );
-
-		/* Get plugins request */
-		$r_plugins = '';
-		$r_plugins_json = false;
-		if( isset( $r_body['plugins'] ) ){
-
-			/* Check if data can be serialized */
-			if ( is_serialized( $r_body['plugins'] ) ){
-
-				/* unserialize data ( PRE WP 3.7 ) */
-				$r_plugins = @unserialize( $r_body['plugins'] );
-				$r_plugins = (array) $r_plugins; // convert object to array
-			}
-
-			/* if unserialize didn't work ( POST WP.3.7 using json ) */
-			else{
-				/* use json decode to make body request to array */
-				$r_plugins = json_decode( $r_body['plugins'], true );
-				$r_plugins_json = true;
-			}
-		}
-
-		/* this plugin */
-		$to_disable = '';
-
-		/* check if plugins request is not empty */
-		if  ( !empty( $r_plugins ) ){
-
-			/* All plugins */
-			$all_plugins = $r_plugins['plugins'];
-
-			/* Loop all plugins */
-			foreach ( $all_plugins as $plugin_base => $plugin_data ){
-
-				/* Only if the plugin have the same folder, because plugins can have different main file. */
-				if ( dirname( $plugin_base ) == $plugin_slug ){
-
-					/* get plugin to disable */
-					$to_disable = $plugin_base;
-				}
-			}
-
-			/* Unset this plugin only */
-			if ( !empty( $to_disable ) ){
-				unset(  $all_plugins[ $to_disable ] );
-			}
-
-			/* Merge plugins request back to request */
-			if ( true === $r_plugins_json ){ // json encode data
-				$r_plugins['plugins'] = $all_plugins;
-				$r['body']['plugins'] = json_encode( $r_plugins );
-			}
-			else{ // serialize data
-				$r_plugins['plugins'] = $all_plugins;
-				$r_plugins_object = (object) $r_plugins;
-				$r['body']['plugins'] = serialize( $r_plugins_object );
-			}
-		}
-
-		/* return the request */
-		return $r;
 	}
 
 	/**
@@ -209,6 +125,7 @@ class RKV_Remote_Updater {
 		global $wp_version;
 
 		$data = array_merge( $this->api_data, $_data );
+
 		if( $data['slug'] != $this->slug )
 			return;
 
@@ -227,7 +144,11 @@ class RKV_Remote_Updater {
 
 		$request = wp_remote_post( $this->api_url, $api_args );
 
-		// bail if my request is dead
+		// bail if my request can't connect
+		if ( $request['response']['code'] != 200 )
+			return false;
+
+		// bail if my request errors out
 		if ( is_wp_error( $request ) )
 			return false;
 
@@ -238,16 +159,158 @@ class RKV_Remote_Updater {
 		if ( ! is_array( $response ) || is_array( $response ) && empty( $response ) )
 			return false;
 
-		// Create response data object
-		$updates = new stdClass;
-		$updates->slug			= $response['slug'];
-		$updates->url			= $response['url'];
-		$updates->new_version	= $response['new_version'];
-		$updates->package		= $response['package'];
-		$updates->sections		= $response['sections'];
+		$updates	= false;
+
+		// build and return the basic info
+		if ( $_action == 'plugin_latest_version' )
+			$updates	= self::get_version_response( $response );
+
+		// build the larger return for updates
+		if ( $_action == 'plugin_information' )
+			$updates	= self::get_information_response( $response );
+
+		if ( ! $updates )
+			return false;
 
 		return $updates;
 
+	}
+
+	/**
+	 * [get_version_response description]
+	 * @param  [type] $response [description]
+	 * @return [type]           [description]
+	 */
+	static function get_version_response( $response ) {
+
+		// Create response data object
+		$updates = new stdClass;
+
+		$updates->slug				= $response['slug'];
+		$updates->new_version		= $response['new_version'];
+		$updates->url				= $response['url'];
+		$updates->package			= $response['package'];
+
+		return $updates;
+
+	}
+
+	/**
+	 * [get_information_response description]
+	 * @param  [type] $response [description]
+	 * @return [type]           [description]
+	 */
+	static function get_information_response( $response ) {
+
+		// Create response data object
+		$updates = new stdClass;
+
+		// build out our huge goddamn array
+		$updates->name				= $response['name'];
+		$updates->slug				= $response['slug'];
+		$updates->version			= $response['version'];
+		$updates->author			= $response['author'];
+		$updates->author_profile	= $response['author_profile'];
+		$updates->contributors		= $response['contributors'];
+		$updates->requires			= $response['requires'];
+		$updates->tested			= $response['tested'];
+		$updates->rating			= $response['rating'];
+		$updates->num_ratings		= $response['num_ratings'];
+		$updates->downloaded		= $response['downloaded'];
+		$updates->last_updated		= $response['last_updated'];
+		$updates->added				= $response['added'];
+		$updates->homepage			= $response['homepage'];
+		$updates->download_link		= $response['download_link'];
+		$updates->sections			= $response['sections'];
+
+		return $updates;
+
+	}
+
+	/**
+	 * Disable request to wp.org plugin repository
+	 * this function is to remove update request data of this plugin to wp.org
+	 * so wordpress would not do update check for this plugin.
+	 *
+	 * @link http://markjaquith.wordpress.com/2009/12/14/excluding-your-plugin-or-theme-from-update-checks/
+	 * @since 0.1.2
+	 */
+	public function disable_wporg( $r, $url ){
+
+		/* WP.org plugin update check URL */
+		$wp_url_string = 'api.wordpress.org/plugins/update-check';
+
+		/* If it's not a plugin update check request, bail early */
+		if ( false === strpos( $url, $wp_url_string ) )
+			return $r;
+
+
+		/* Get this plugin slug */
+		$plugin_slug = dirname( $this->slug );
+
+		/* Get response body (json/serialize data) */
+		$r_body = wp_remote_retrieve_body( $r );
+
+		/* Get plugins request */
+		$r_plugins = '';
+		$r_plugins_json = false;
+		if( isset( $r_body['plugins'] ) ) {
+
+			/* Check if data can be serialized */
+			if ( is_serialized( $r_body['plugins'] ) ) {
+
+				/* unserialize data ( PRE WP 3.7 ) */
+				$r_plugins = @unserialize( $r_body['plugins'] );
+				$r_plugins = (array) $r_plugins; // convert object to array
+			}
+
+			/* if unserialize didn't work ( POST WP.3.7 using json ) */
+			else {
+				/* use json decode to make body request to array */
+				$r_plugins = json_decode( $r_body['plugins'], true );
+				$r_plugins_json = true;
+			}
+		}
+
+		/* this plugin */
+		$to_disable = '';
+
+		/* check if plugins request is not empty */
+		if  ( !empty( $r_plugins ) ) {
+
+			/* All plugins */
+			$all_plugins = $r_plugins['plugins'];
+
+			/* Loop all plugins */
+			foreach ( $all_plugins as $plugin_base => $plugin_data ){
+
+				/* Only if the plugin have the same folder, because plugins can have different main file. */
+				if ( dirname( $plugin_base ) == $plugin_slug ){
+
+					/* get plugin to disable */
+					$to_disable = $plugin_base;
+				}
+			}
+
+			/* Unset this plugin only */
+			if ( !empty( $to_disable ) ){
+				unset(  $all_plugins[ $to_disable ] );
+			}
+
+			/* Merge plugins request back to request */
+			if ( true === $r_plugins_json ){ // json encode data
+				$r_plugins['plugins'] = $all_plugins;
+				$r['body']['plugins'] = json_encode( $r_plugins );
+			}
+			else{ // serialize data
+				$r_plugins['plugins'] = $all_plugins;
+				$r_plugins_object = (object) $r_plugins;
+				$r['body']['plugins'] = serialize( $r_plugins_object );
+			}
+		}
+
+		/* return the request */
+		return $r;
 	}
 
 }
