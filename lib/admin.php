@@ -78,10 +78,12 @@ class RKV_Remote_Repo_Admin
 		unset( $columns['date'] );
 
 		// now add the custom stuff
-		$columns['title']		= 'Item Name';
-		$columns['package']		= 'Package File';
-		$columns['version']		= 'Version';
-		$columns['updated']		= 'Updated';
+		$columns['title']		= __( 'Item Name', '' );
+		$columns['package']		= __( 'Package File', '' );
+		$columns['version']		= __( 'Version', '' );
+		$columns['added']		= __( 'Added', '' );
+		$columns['updated']		= __( 'Updated', '' );
+		$columns['readme']		= __( 'Readme', '' );
 
 		return $columns;
 
@@ -97,27 +99,43 @@ class RKV_Remote_Repo_Admin
 	public function display_columns( $column, $post_id ) {
 
 		$meta	= get_post_meta( $post_id, '_rkv_repo_data', true );
+		$none	= '('.__( 'none entered', '' ).')';
 
 		switch ( $column ) {
 
 		case 'package':
-			$name	= !empty( $meta['package'] ) ? '<a href="'.esc_url( $meta['package'] ).'">Download</a>' : '(none entered)';
+			$data	= !empty( $meta['package'] ) ? '<a href="'.esc_url( $meta['package'] ).'">'.__( 'Download', '' ).'</a>' : $none;
 
-			echo $name;
+			echo $data;
 
 			break;
 
 		case 'version':
-			$vers	= !empty( $meta['version'] ) ? $meta['version'] : '(none entered)';
+			$data	= !empty( $meta['version'] ) ? $meta['version'] : $none;
 
-			echo $vers;
+			echo $data;
+
+			break;
+
+		case 'added':
+			$data	= !empty( $meta['added'] ) ? date( 'Y-m-d', floatval( $meta['added'] ) ) : $none;
+
+			echo $data;
 
 			break;
 
 		case 'updated':
-			$vers	= !empty( $meta['updated'] ) ? date( 'Y-m-d', floatval( $meta['updated'] ) ) : '(none entered)';
+			$data	= !empty( $meta['last_updated'] ) ? date( 'Y-m-d', floatval( $meta['last_updated'] ) ) : $none;
 
-			echo $vers;
+			echo $data;
+
+			break;
+
+		case 'readme':
+			$file	= get_post_meta( $post_id, '_rkv_repo_readme_file', true );
+			$data	= ! $file ? 'dashicons-no meta-column-no' : 'dashicons-yes meta-column-yes';
+
+			echo '<span class="meta-column-item dashicons '.$data.'"></span>';
 
 			break;
 
@@ -135,37 +153,45 @@ class RKV_Remote_Repo_Admin
 
 	public function _register_types() {
 
-		register_post_type( 'repo-items',
-			array(
-				'labels'	=> array(
-					'name' 					=> __( 'Repository',				'' ),
-					'singular_name' 		=> __( 'Item',						'' ),
-					'add_new'				=> __( 'Add New Item',				'' ),
-					'add_new_item'			=> __( 'Add New Item',				'' ),
-					'edit'					=> __( 'Edit',						'' ),
-					'edit_item'				=> __( 'Edit Item',					'' ),
-					'new_item'				=> __( 'New Item',					'' ),
-					'view'					=> __( 'View Item',					'' ),
-					'view_item'				=> __( 'View Item',					'' ),
-					'search_items'			=> __( 'Search Items',				'' ),
-					'not_found'				=> __( 'No Items found',			'' ),
-					'not_found_in_trash'	=> __( 'No Items found in Trash',	'' ),
-				),
-				'public'	=> true,
-					'show_in_nav_menus'		=> false,
-					'show_ui'				=> true,
-					'publicly_queryable'	=> false,
-					'exclude_from_search'	=> true,
-				'hierarchical'		=> false,
-				'menu_position'		=> null,
-				'capability_type'	=> 'post',
-				'menu_icon'			=> 'dashicons-share-alt',
-				'query_var'			=> true,
-				'rewrite'			=> false,
-				'has_archive'		=> false,
-				'supports'			=> array( 'title' ),
-			)
+		$labels	= array(
+			'name'					=> __( 'Repository',				'' ),
+			'menu_name'				=> __( 'Repository',				'' ),
+			'all_items'				=> __( 'Items',						'' ),
+			'singular_name'			=> __( 'Item',						'' ),
+			'add_new'				=> __( 'Add New Item',				'' ),
+			'add_new_item'			=> __( 'Add New Item',				'' ),
+			'edit'					=> __( 'Edit Item',					'' ),
+			'edit_item'				=> __( 'Edit Item',					'' ),
+			'new_item'				=> __( 'New Item',					'' ),
+			'view'					=> __( 'View Item',					'' ),
+			'view_item'				=> __( 'View Item',					'' ),
+			'search_items'			=> __( 'Search Repository',			'' ),
+			'not_found'				=> __( 'No Items found',			'' ),
+			'not_found_in_trash'	=> __( 'No Items found in Trash',	'' ),
 		);
+
+		$cpt_args	= array(
+			'labels'				=> $labels,
+			'public'				=> true,
+			'show_in_menu'			=> true,
+			'show_in_nav_menus'		=> false,
+			'show_ui'				=> true,
+			'publicly_queryable'	=> true,
+			'exclude_from_search'	=> true,
+			'hierarchical'			=> false,
+			'menu_position'			=> null,
+			'capability_type'		=> 'post',
+			'query_var'				=> true,
+			'menu_icon'				=> 'dashicons-share-alt',
+			'rewrite'				=> false,
+			'has_archive'			=> false,
+			'supports'				=> array( 'title' ),
+		);
+
+		$cpt_args = apply_filters( 'reaktiv_remote_repo_type_args', $cpt_args );
+
+		register_post_type( 'repo-items', $cpt_args );
+
 	}
 
 /// end class

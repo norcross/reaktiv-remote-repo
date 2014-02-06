@@ -55,6 +55,8 @@ class RKV_Remote_Repo_PostMeta
 		echo '<table id="repo-meta-table" class="form-table">';
 		echo '<tbody>';
 
+		do_action( 'reaktiv_remote_repo_before_fileinfo_meta', $post, $data );
+
 		// setup each field
 		echo '<tr class="repo-package-field repo-upload-item-field">';
 			echo '<th>';
@@ -62,7 +64,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '</th>';
 			echo '<td>';
 				echo '<input type="url" name="repo-meta[package]" id="repo-package" class="repo-item-file-text repo-item-file-upload" value="'. esc_url( $package ).'">';
-				echo '<input data-uploader_title="'.__( 'Select A File', '' ).'" data-uploader_button="'.__( 'Select', '' ).'" class="button button-secondary repo-file-upload" type="button" value="'.__( 'Add File', '' ).'">';
+				echo '<input data-uploader_title="'.__( 'Select A File', '' ).'" data-uploader_button="'.__( 'Select', '' ).'" class="button button-secondary repo-file-upload" type="button" value="'.__( 'Add Download File', '' ).'">';
 
 				echo '<p class="description">'.__( 'The zipped package file to serve for updating.', '' ).'</p>';
 			echo '</td>';
@@ -74,7 +76,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '</th>';
 			echo '<td>';
 				echo '<input type="url" name="repo-meta[readme]" id="repo-readme" class="repo-item-file-text repo-item-file-upload" value="'. esc_url( $readme ).'">';
-				echo '<input data-uploader_title="'.__( 'Select A File', '' ).'" data-uploader_button="'.__( 'Select', '' ).'" class="button button-secondary repo-file-upload" type="button" value="'.__( 'Add Readme', '' ).'">';
+				echo '<input data-uploader_title="'.__( 'Select A File', '' ).'" data-uploader_button="'.__( 'Select', '' ).'" class="button button-secondary repo-file-upload" type="button" value="'.__( 'Add Readme.txt File', '' ).'">';
 
 				echo '<p class="description">'.__( 'A markdown formatted readme file', '' ).'</p>';
 			echo '</td>';
@@ -120,8 +122,12 @@ class RKV_Remote_Repo_PostMeta
 				endforeach;
 				endif;
 				echo '</div>';
+				// info about how they are used
+				echo '<p class="description">'.__( 'Note: the attachment name will be displayed below the image.', '' ).'</p>';
 			echo '</td>';
 		echo '</tr>';
+
+		do_action( 'reaktiv_remote_repo_after_fileinfo_meta', $post, $data );
 
 		echo '</tbody>';
 		echo '</table>';
@@ -147,12 +153,9 @@ class RKV_Remote_Repo_PostMeta
 		echo '<table id="repo-meta-table" class="form-table">';
 		echo '<tbody>';
 
-		echo '<tr class="repo-readme-notice">';
-			echo '<th>&nbsp;</th>';
-			echo '<td>';
-				echo '<h4 class="readme-info-text">'.__( '<strong>Note:</strong> If you have uploaded a markdown-formatted readme file, that will take priority over anything in this section', '' ).'</h4>';
-			echo '</td>';
-		echo '</tr>';
+		echo self::readme_notice();
+
+		do_action( 'reaktiv_remote_repo_before_reademe_meta', $post, $data );
 
 		echo '<tr class="repo-description-field">';
 			echo '<th>';
@@ -196,6 +199,8 @@ class RKV_Remote_Repo_PostMeta
 			echo '</td>';
 		echo '</tr>';
 
+		do_action( 'reaktiv_remote_repo_after_reademe_meta', $post, $data );
+
 		echo '</tbody>';
 		echo '</table>';
 
@@ -218,6 +223,8 @@ class RKV_Remote_Repo_PostMeta
 
 		$add_show	= ! empty( $add_stamp ) ? date( 'Y-m-d', floatval( $add_stamp ) ) : '';
 		$upd_show	= ! empty( $upd_stamp ) ? date( 'Y-m-d', floatval( $upd_stamp ) ) : '';
+
+		do_action( 'reaktiv_remote_repo_before_version_meta', $post, $data );
 
 		echo '<p class="repo-side-field repo-version-field">';
 			echo '<input type="text" name="repo-meta[version]" id="repo-version" class="repo-item-num-text" value="'.esc_attr( $version ).'">';
@@ -246,6 +253,8 @@ class RKV_Remote_Repo_PostMeta
 			echo '&nbsp;<label class="repo-item-label" for="repo-updated">'.__( 'Updated', '' ).'</label>';
 		echo '</p>';
 
+		do_action( 'reaktiv_remote_repo_after_version_meta', $post, $data );
+
 	}
 
 
@@ -262,6 +271,8 @@ class RKV_Remote_Repo_PostMeta
 		$profile	= isset( $data['author_profile'] )	? $data['author_profile']	: '';
 		$contribs	= isset( $data['contributors'] )	? $data['contributors']		: '';
 
+		do_action( 'reaktiv_remote_repo_before_author_meta', $post, $data );
+
 		echo '<p class="repo-side-field repo-author-field">';
 			echo '<input type="text" name="repo-meta[author]" id="repo-author" class="widefat" value="'.esc_attr( $author ).'">';
 			echo '<label for="repo-author">'.__( 'Author Name', '' ).'</label>';
@@ -276,6 +287,8 @@ class RKV_Remote_Repo_PostMeta
 			echo '<textarea name="repo-meta[contributors]" id="repo-contribs" class="widefat repo-item-textarea">'.esc_attr( $contribs ).'</textarea>';
 			echo '<label for="repo-contribs">'.__( 'Contributors <em>(separate by comma)</em>', '' ).'</label>';
 		echo '</p>';
+
+		do_action( 'reaktiv_remote_repo_after_author_meta', $post, $data );
 
 	}
 
@@ -292,6 +305,8 @@ class RKV_Remote_Repo_PostMeta
 		$rcount		= isset( $data['num_ratings'] )		&& ! empty( $data['num_ratings'] )	? $data['num_ratings']	: '';
 		$dcount		= isset( $data['downloaded'] )		&& ! empty( $data['downloaded'] )	? $data['downloaded']	: '';
 
+		do_action( 'reaktiv_remote_repo_before_rating_meta', $post, $data );
+
 		echo '<p class="repo-side-field repo-rating-field">';
 			echo '<input type="text" name="repo-meta[rating]" id="repo-rating" class="repo-item-num-text" value="'.absint( $rating ).'">';
 			echo '&nbsp;<label class="repo-item-label" for="repo-rating">'.__( 'Rating (out of 100)', '' ).'</label>';
@@ -307,6 +322,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '&nbsp;<label class="repo-item-label" for="repo-dcount">'.__( 'Download Count', '' ).'</label>';
 		echo '</p>';
 
+		do_action( 'reaktiv_remote_repo_after_rating_meta', $post, $data );
 
 	}
 
@@ -336,6 +352,12 @@ class RKV_Remote_Repo_PostMeta
 		// get data via $_POST and store it
 		$data	= $_POST['repo-meta'];
 
+		// trim my upgrade notices
+		if ( isset( $data['upgrade_notice'] ) ) {
+			$filter_array	= array_map( 'array_filter', $data['upgrade_notice'] );
+			$data['upgrade_notice']	= array_filter( $filter_array );
+		}
+
 
 		if ( isset( $data ) && ! empty( $data ) )
 			update_post_meta( $post_id, '_rkv_repo_data', $data );
@@ -353,7 +375,11 @@ class RKV_Remote_Repo_PostMeta
 
 	}
 
-
+	/**
+	 * [repo_editor_load description]
+	 * @param  [type] $key [description]
+	 * @return [type]      [description]
+	 */
 	static function repo_editor_load( $key ) {
 
 		$args	= array(
@@ -366,6 +392,28 @@ class RKV_Remote_Repo_PostMeta
 		$args	= apply_filters( 'rkv_remote_repo_editor_args', $args, $key );
 
 		return $args;
+
+	}
+
+	/**
+	 * [readme_notice description]
+	 * @return [type] [description]
+	 */
+	static function readme_notice() {
+
+		if ( false === apply_filters( 'rkv_remote_repo_readme_notice', true ) )
+			return;
+
+		$show	= '';
+
+		$show	.= '<tr class="repo-readme-notice">';
+			$show	.= '<th>&nbsp;</th>';
+			$show	.= '<td>';
+				$show	.= '<h4 class="readme-info-text">'.__( '<strong>Note:</strong> If you have uploaded a markdown-formatted readme file, that will take priority over anything in this section', '' ).'</h4>';
+			$show	.= '</td>';
+		$show	.= '</tr>';
+
+		return $show;
 
 	}
 

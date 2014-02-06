@@ -1,3 +1,26 @@
+/* post table */
+
+th.column-readme,
+td.column-readme {
+	width: 100px;
+	text-align: center;
+}
+
+span.meta-column-item {
+	display: block;
+	width: 100%;
+	font-size: 24px;
+}
+
+span.meta-column-yes {
+	color: #458b00;
+}
+
+span.meta-column-no {
+	color: #cc0000;
+}
+
+/* post editor */
 input.repo-item-file-text {
 	width: 75%;
 	margin-right: 10px;
@@ -85,6 +108,26 @@ div.repo-screenshot-gallery div.screenshot-item span.screenshot-remove {
 tr.repo-readme-notice h4.readme-info-text {
 	margin: 0;
 	font-weight: 400;
+}
+
+tr.repo-upgrade-notice-field span.repo-unotice-vers-title,
+tr.repo-upgrade-notice-field span.repo-unotice-text-title {
+	font-size: 12px;
+	font-weight: 700;
+}
+
+tr.repo-upgrade-notice-field span.repo-unotice-vers-title,
+tr.repo-upgrade-notice-field input.repo-unotice-vers {
+	display: inline-block;
+	vertical-align: top;
+	width: 5%;
+	margin-right: 1%;
+}
+tr.repo-upgrade-notice-field span.repo-unotice-text-title,
+tr.repo-upgrade-notice-field input.repo-unotice-text {
+	display: inline-block;
+	vertical-align: top;
+	width: 80%;
 }
 
 /* Default styling for jQuery Datepicker v4.0.6. */

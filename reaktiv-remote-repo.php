@@ -497,7 +497,7 @@ class Reaktiv_Remote_Repo {
 			'faq'			=> $data['faq'],
 		);
 
-		$sections	= apply_filters( 'rkv_remote_repo_display_sections', $sections );
+		$sections	= apply_filters( 'rkv_remote_repo_display_sections', $sections, $data );
 
 		return $sections;
 
