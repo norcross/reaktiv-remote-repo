@@ -124,7 +124,7 @@ class Reaktiv_Remote_Repo {
 		endif;
 
 		// check if action isnt one of our allowed
-		if ( ! in_array( $wp_query->query_vars['action'], array( 'plugin_latest_version', 'plugin_information' ) ) ) :
+		if ( ! in_array( $wp_query->query_vars['action'], array( 'plugin_latest_version', 'plugin_information', 'update_counts' ) ) ) :
 
 			$response	= array(
 				'success'		=> false,
@@ -228,6 +228,7 @@ class Reaktiv_Remote_Repo {
 		/* TODO add custom validation method */
 
 		// add some shit to the array
+		$product_data['item_id']	= $product_id;
 		$product_data['name']		= get_the_title( $product_id );
 
 		// all checks passed, return product file
@@ -568,6 +569,33 @@ class Reaktiv_Remote_Repo {
 	}
 
 	/**
+	 * [process_plugin_counts description]
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
+	 */
+	public function process_plugin_counts( $data ) {
+
+		// pull the current item meta
+		$meta		= get_post_meta( $data['item_id'], '_rkv_repo_data', true );
+
+		// get our count (or set to zero)
+		$current	= isset( $meta['downloaded'] ) ? absint( $meta['downloaded'] ) : absint( 0 );
+
+		// increase it by one
+		$update		= $current + 1;
+
+		// add it back into the array
+		$meta['downloaded']	= absint( $update );
+
+		// update item with new count
+		update_post_meta( $data['item_id'], '_rkv_repo_data', $meta );
+
+		// get out
+		return true;
+
+	}
+
+	/**
 	 * Listens for the API and then processes the API requests
 	 *
 	 * @access public
@@ -596,6 +624,9 @@ class Reaktiv_Remote_Repo {
 
 		if ( $wp_query->query_vars['action']	== 'plugin_information' )
 			$process	= $this->process_plugin_details( $data, $wp_query->query_vars['slug'] );
+
+		if ( $wp_query->query_vars['action']	== 'update_counts' )
+			$process	= $this->process_plugin_counts( $data );
 
 		if ( ! $process )
 			return;

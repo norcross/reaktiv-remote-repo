@@ -1,7 +1,7 @@
 <?php
 
 // uncomment this line for testing
-// set_site_transient( 'update_plugins', false );
+set_site_transient( 'update_plugins', false );
 
 
 /**
@@ -34,6 +34,7 @@ class RKV_Remote_Updater {
 		$this->api_url  = trailingslashit( $_api_url );
 		$this->api_data = urlencode_deep( $_api_data );
 		$this->name     = plugin_basename( $_plugin_file );
+		$this->item		= $_api_data['item'];
 		$this->slug     = basename( $_plugin_file, '.php');
 		$this->version  = $_api_data['version'];
 
@@ -54,6 +55,7 @@ class RKV_Remote_Updater {
 
 		add_filter	(	'pre_set_site_transient_update_plugins',	array(	$this,	'api_check'			)			);
 		add_filter	(	'plugins_api',								array(	$this,	'api_data'			),	10,	3	);
+		add_filter	(	'upgrader_post_install',					array(	$this,	'run_remote_count'	),	10,	3	);
 		add_filter	(	'http_request_args',						array(	$this,	'disable_wporg'		),	5,	2	);
 
 	}
@@ -244,6 +246,68 @@ class RKV_Remote_Updater {
 		$updates->sections			= $response['sections'];
 
 		return $updates;
+
+	}
+
+	/**
+	 * [update_remote_count description]
+	 * @return [type] [description]
+	 */
+	public function update_remote_count( $data ) {
+
+		// build array
+		$api_args = array(
+			'method'	=> 'POST',
+			'timeout'	=> 15,
+			'sslverify' => false,
+			'body'		=> array(
+				'action'	=> 'update_counts',
+				'item'		=> $data['item'],
+				'version'	=> $data['version'],
+				'slug' 		=> $data['slug'],
+			),
+		);
+
+		// send request
+		$request = wp_remote_post( $this->api_url, $api_args );
+
+		// bail now, because we don't really care what the outcome was
+		return;
+
+	}
+
+	/**
+	 * [run_remote_count description]
+	 * @param  [type] $true       [description]
+	 * @param  [type] $hook_extra [description]
+	 * @param  [type] $result     [description]
+	 * @return [type]             [description]
+	 */
+	public function run_remote_count( $true, $hook_extra, $result ) {
+
+		// first check our bypass filter
+		if ( false === apply_filters( 'rkv_remote_repo_update_count', true ) )
+			return $result;
+
+		// make sure there's data to check
+		if ( ! isset( $hook_extra ) )
+			return $result;
+
+		// make sure we're dealing with our plugin
+		if ( ! isset( $hook_extra['plugin'] ) || $hook_extra['plugin'] != $this->name )
+			return $result;
+
+		// build our data array
+		$data	= array(
+			'item'		=> $this->item,
+			'version'	=> $this->version,
+			'slug'		=> $this->slug,
+		);
+
+		// run our callback counter
+		$this->update_remote_count( $data );
+
+		return $result;
 
 	}
 
