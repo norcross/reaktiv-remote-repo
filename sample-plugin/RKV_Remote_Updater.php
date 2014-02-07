@@ -58,8 +58,18 @@ class RKV_Remote_Updater {
 		add_filter	(	'upgrader_post_install',					array(	$this,	'run_remote_count'	),	10,	3	);
 		add_filter	(	'http_request_args',						array(	$this,	'disable_wporg'		),	5,	2	);
 
+		register_activation_hook	( __FILE__,						array(	$this,	'clear_transient'	)			);
+
 	}
 
+	/**
+	 * delete the transient check on initial install
+	 * @return void
+	 */
+	public function clear_transient() {
+
+		delete_transient( 'update_plugins' );
+	}
 
 	/**
 	 * run transient check
@@ -155,12 +165,12 @@ class RKV_Remote_Updater {
 		// send request
 		$request = wp_remote_post( $this->api_url, $api_args );
 
-		// bail if my request can't connect
-		if ( $request['response']['code'] != 200 )
-			return false;
-
 		// bail if my request errors out
 		if ( is_wp_error( $request ) )
+			return false;
+
+		// bail if my request can't connect
+		if ( ! isset( $request['response'] ) || $request['response']['code'] != 200 )
 			return false;
 
 		// decode the JSON I sent back and make sure it's an array instead of object

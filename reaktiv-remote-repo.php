@@ -109,20 +109,6 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function validate_request( $wp_query ) {
 
-		// check for missing action
-		if ( ! isset( $wp_query->query_vars['action'] ) ) :
-
-			$response	= array(
-				'success'		=> false,
-				'error_code'	=> 'ACTION_MISSING',
-				'message'		=> 'No action was declared.'
-			);
-
-			$this->output( $response );
-			return false;
-
-		endif;
-
 		// check if action isnt one of our allowed
 		if ( ! in_array( $wp_query->query_vars['action'], array( 'plugin_latest_version', 'plugin_information', 'update_counts' ) ) ) :
 
@@ -610,6 +596,10 @@ class Reaktiv_Remote_Repo {
 
 		// Check for update var. Get out if not present
 		if ( ! isset( $wp_query->query_vars['update'] ) )
+			return;
+
+		// bail if no action is set
+		if ( ! isset( $wp_query->query_vars['action'] ) )
 			return;
 
 		// run my validation checks
