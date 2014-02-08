@@ -85,6 +85,8 @@ class RKV_Remote_Repo_Admin
 		$columns['updated']		= __( 'Updated', '' );
 		$columns['readme']		= __( 'Readme', '' );
 
+		$columns	= apply_filters( 'rkv_remote_repo_admin_columns', $columns );
+
 		return $columns;
 
 	}
@@ -188,7 +190,7 @@ class RKV_Remote_Repo_Admin
 			'supports'				=> array( 'title' ),
 		);
 
-		$cpt_args = apply_filters( 'reaktiv_remote_repo_type_args', $cpt_args );
+		$cpt_args = apply_filters( 'rkv_remote_repo_type_args', $cpt_args );
 
 		register_post_type( 'repo-items', $cpt_args );
 

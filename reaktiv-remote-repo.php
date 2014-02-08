@@ -109,6 +109,8 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function validate_request( $wp_query ) {
 
+		do_action( 'rkv_remote_repo_before_validation', $wp_query );
+
 		// check if action isnt one of our allowed
 		if ( ! in_array( $wp_query->query_vars['action'], array( 'plugin_latest_version', 'plugin_information', 'update_counts' ) ) ) :
 
@@ -211,7 +213,8 @@ class Reaktiv_Remote_Repo {
 
 		endif;
 
-		/* TODO add custom validation method */
+		/* TODO add custom validation methods */
+		do_action( 'rkv_remote_repo_after_validation', $wp_query );
 
 		// add some shit to the array
 		$product_data['item_id']	= $product_id;
@@ -274,7 +277,7 @@ class Reaktiv_Remote_Repo {
 	static function sanitize_section_data( $section ) {
 
 		/* allowed tags */
-		$allowedtags = array(
+		$allowed = array(
 			'a' => array( 'href' => array(), 'title' => array(), 'target' => array() ),
 			'abbr' => array( 'title' => array() ), 'acronym' => array( 'title' => array() ),
 			'code' => array(), 'pre' => array(), 'em' => array(), 'strong' => array(),
@@ -283,7 +286,9 @@ class Reaktiv_Remote_Repo {
 			'img' => array( 'src' => array(), 'class' => array(), 'alt' => array() )
 		);
 
-		$content = wp_kses( $section, $allowedtags );
+		$allowed	= apply_filters( 'rkv_remote_repo_allowed_tags', $allowed );
+
+		$content = wp_kses( $section, $allowed );
 
 		return $content;
 	}
@@ -560,6 +565,10 @@ class Reaktiv_Remote_Repo {
 	 * @return [type]       [description]
 	 */
 	public function process_plugin_counts( $data ) {
+
+		// check our bypass filter first
+		if ( false === apply_filters( 'rkv_remote_repo_plugin_counts', true ) )
+			return false;
 
 		// pull the current item meta
 		$meta		= get_post_meta( $data['item_id'], '_rkv_repo_data', true );

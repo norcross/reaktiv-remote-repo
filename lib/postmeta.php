@@ -55,7 +55,7 @@ class RKV_Remote_Repo_PostMeta
 		echo '<table id="repo-meta-table" class="form-table">';
 		echo '<tbody>';
 
-		do_action( 'reaktiv_remote_repo_before_fileinfo_meta', $post, $data );
+		do_action( 'rkv_remote_repo_before_fileinfo_meta', $post, $data );
 
 		// setup each field
 		echo '<tr class="repo-package-field repo-upload-item-field">';
@@ -127,7 +127,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '</td>';
 		echo '</tr>';
 
-		do_action( 'reaktiv_remote_repo_after_fileinfo_meta', $post, $data );
+		do_action( 'rkv_remote_repo_after_fileinfo_meta', $post, $data );
 
 		echo '</tbody>';
 		echo '</table>';
@@ -155,7 +155,7 @@ class RKV_Remote_Repo_PostMeta
 
 		echo self::readme_notice();
 
-		do_action( 'reaktiv_remote_repo_before_reademe_meta', $post, $data );
+		do_action( 'rkv_remote_repo_before_reademe_meta', $post, $data );
 
 		echo '<tr class="repo-description-field">';
 			echo '<th>';
@@ -199,7 +199,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '</td>';
 		echo '</tr>';
 
-		do_action( 'reaktiv_remote_repo_after_reademe_meta', $post, $data );
+		do_action( 'rkv_remote_repo_after_reademe_meta', $post, $data );
 
 		echo '</tbody>';
 		echo '</table>';
@@ -224,7 +224,7 @@ class RKV_Remote_Repo_PostMeta
 		$add_show	= ! empty( $add_stamp ) ? date( 'Y-m-d', floatval( $add_stamp ) ) : '';
 		$upd_show	= ! empty( $upd_stamp ) ? date( 'Y-m-d', floatval( $upd_stamp ) ) : '';
 
-		do_action( 'reaktiv_remote_repo_before_version_meta', $post, $data );
+		do_action( 'rkv_remote_repo_before_version_meta', $post, $data );
 
 		echo '<p class="repo-side-field repo-version-field">';
 			echo '<input type="text" name="repo-meta[version]" id="repo-version" class="repo-item-num-text" value="'.esc_attr( $version ).'">';
@@ -253,7 +253,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '&nbsp;<label class="repo-item-label" for="repo-updated">'.__( 'Updated', '' ).'</label>';
 		echo '</p>';
 
-		do_action( 'reaktiv_remote_repo_after_version_meta', $post, $data );
+		do_action( 'rkv_remote_repo_after_version_meta', $post, $data );
 
 	}
 
@@ -271,7 +271,7 @@ class RKV_Remote_Repo_PostMeta
 		$profile	= isset( $data['author_profile'] )	? $data['author_profile']	: '';
 		$contribs	= isset( $data['contributors'] )	? $data['contributors']		: '';
 
-		do_action( 'reaktiv_remote_repo_before_author_meta', $post, $data );
+		do_action( 'rkv_remote_repo_before_author_meta', $post, $data );
 
 		echo '<p class="repo-side-field repo-author-field">';
 			echo '<input type="text" name="repo-meta[author]" id="repo-author" class="widefat" value="'.esc_attr( $author ).'">';
@@ -288,7 +288,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '<label for="repo-contribs">'.__( 'Contributors <em>(separate by comma)</em>', '' ).'</label>';
 		echo '</p>';
 
-		do_action( 'reaktiv_remote_repo_after_author_meta', $post, $data );
+		do_action( 'rkv_remote_repo_after_author_meta', $post, $data );
 
 	}
 
@@ -305,7 +305,7 @@ class RKV_Remote_Repo_PostMeta
 		$rcount		= isset( $data['num_ratings'] )		&& ! empty( $data['num_ratings'] )	? $data['num_ratings']	: '';
 		$dcount		= isset( $data['downloaded'] )		&& ! empty( $data['downloaded'] )	? $data['downloaded']	: '';
 
-		do_action( 'reaktiv_remote_repo_before_rating_meta', $post, $data );
+		do_action( 'rkv_remote_repo_before_rating_meta', $post, $data );
 
 		echo '<p class="repo-side-field repo-rating-field">';
 			echo '<input type="text" name="repo-meta[rating]" id="repo-rating" class="repo-item-num-text" value="'.absint( $rating ).'">';
@@ -322,7 +322,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '&nbsp;<label class="repo-item-label" for="repo-dcount">'.__( 'Download Count', '' ).'</label>';
 		echo '</p>';
 
-		do_action( 'reaktiv_remote_repo_after_rating_meta', $post, $data );
+		do_action( 'rkv_remote_repo_after_rating_meta', $post, $data );
 
 	}
 
