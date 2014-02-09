@@ -14,11 +14,6 @@ if ( ! defined( 'RKV_REPO_PLUGIN_DIR' ) )
 
 
 
-include( 'lib/admin.php' );
-include( 'lib/postmeta.php' );
-include( 'lib/parse.php' );
-
-
 /**
  * Reaktiv_Remote_Repo Class
  *
@@ -41,9 +36,23 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function __construct() {
 
-		add_action(	'init',                    array(	$this,	'add_endpoint'			)		);
-		add_action( 'template_redirect',       array(	$this,	'process_query'			),	1	);
-		add_filter( 'query_vars',              array(	$this,	'query_vars'			)		);
+		add_action			(	'plugins_loaded', 					array(	$this,	'load_files'			) 		);
+
+		add_action			(	'init',								array(	$this,	'add_endpoint'			)		);
+		add_action			(	'template_redirect',				array(	$this,	'process_query'			),	1	);
+		add_filter			(	'query_vars',						array(	$this,	'query_vars'			)		);
+
+	}
+
+	/**
+	 * [load_files description]
+	 * @return [type] [description]
+	 */
+	public function load_files() {
+
+		include( 'lib/admin.php' );
+		include( 'lib/postmeta.php' );
+		include( 'lib/parse.php' );
 
 	}
 
