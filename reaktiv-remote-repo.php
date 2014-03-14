@@ -38,10 +38,10 @@ class Reaktiv_Remote_Repo {
 
 		add_action			(	'plugins_loaded', 					array(	$this,	'load_files'			) 			);
 
-		add_action			(	'init',								array(	$this,	'add_endpoint'			)		);
-		add_action			(	'init',								array(	$this,	'process_download'		),	100	);
-		add_action			(	'template_redirect',				array(	$this,	'process_query'			),	1	);
-		add_filter			(	'query_vars',						array(	$this,	'query_vars'			)		);
+		add_action			(	'init',								array(	$this,	'add_endpoint'			)			);
+		add_action			(	'init',								array(	$this,	'process_download'		),	100		);
+		add_action			(	'template_redirect',				array(	$this,	'process_query'			),	1		);
+		add_filter			(	'query_vars',						array(	$this,	'query_vars'			)			);
 
 		register_activation_hook	(	__FILE__,					array(	$this,	'activate'				)			);
 		register_deactivation_hook	(	__FILE__,					array(	$this,	'deactivate'			)			);
@@ -56,8 +56,6 @@ class Reaktiv_Remote_Repo {
 
 		flush_rewrite_rules();
 
-		// make sure the folder exists
-//		$this->filebase();
 	}
 
 	/**
@@ -121,40 +119,11 @@ class Reaktiv_Remote_Repo {
 	}
 
 	/**
-	 * [filebase description]
-	 * @param  [type] $key [description]
-	 * @return [type]      [description]
-	 */
-	static function filebase( $key = false ) {
-
-		$custom		= apply_filters( 'rkv_remote_repo_uploads_folder', 'rkv-repo' );
-
-		$uploads	= wp_upload_dir();
-		$basedir	= $uploads['basedir'].'/' . $custom . '/';
-		$baseurl	= $uploads['baseurl'].'/' . $custom . '/';
-
-		// check if folder exists. if not, make it
-		if ( ! is_dir( $basedir ) )
-			mkdir( $basedir );
-
-		// set the CHMOD in case
-		chmod( $basedir, 0755 );
-
-		if ( ! $key )
-			return array(
-				'basedir'	=> $basedir,
-				'baseurl'	=> $baseurl
-			);
-
-	}
-
-	/**
 	 * confirm the product being passed exists
 	 * @param  string $unique unique product ID
 	 * @return string product ID or null
 	 */
 	static function get_product_id( $unique ) {
-
 
 //		if( false === get_transient( 'rkv_repo_search_'.$unique ) ) :
 
