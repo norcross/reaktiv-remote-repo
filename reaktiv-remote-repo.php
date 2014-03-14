@@ -84,7 +84,6 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function query_vars( $vars ) {
 
-		$vars[] = 'item';
 		$vars[] = 'version';
 		$vars[] = 'unique';
 		$vars[] = 'action';
@@ -233,7 +232,7 @@ class Reaktiv_Remote_Repo {
 		endif;
 
 		// fetch product data for the rest
-		$product_data	= $this->get_product_data( $product_id );
+		$product_data	= $this->get_product_data( absint( $product_id ) );
 
 		// check if the product has a version
 		if ( ! $product_data['version'] ) :
