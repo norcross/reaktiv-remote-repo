@@ -86,6 +86,7 @@ class Reaktiv_Remote_Repo {
 
 		$vars[] = 'item';
 		$vars[] = 'version';
+		$vars[] = 'unique';
 		$vars[] = 'action';
 		$vars[] = 'slug';
 
@@ -97,17 +98,42 @@ class Reaktiv_Remote_Repo {
 
 	/**
 	 * confirm the product being passed exists
-	 * @param  string $name product name
+	 * @param  string $unique unique product ID
 	 * @return string product ID or null
 	 */
-	static function get_product_id( $name ) {
+	static function get_product_id( $unique ) {
 
-		$data	= get_page_by_title( urldecode( $name ), OBJECT, 'repo-items' );
 
-		if ( ! $data )
-			return;
+//		if( false === get_transient( 'rkv_repo_search_'.$unique ) ) :
 
-		return $data->ID;
+			global $wpdb;
+
+			$meta_key = '_rkv_repo_unique_id';
+
+			$products = $wpdb->get_col( $wpdb->prepare(
+				"
+				SELECT      post_id
+				FROM        $wpdb->postmeta
+				WHERE       meta_key = %s
+				AND 		meta_value = %s
+				",
+				$meta_key,
+				$unique
+			) );
+
+			if ( ! $products ) {
+				return false;
+			}
+
+			$product_id	= $products[0];
+
+//			set_transient( 'rkv_repo_search_'.$unique, $product_id, 0 );
+
+//		endif;
+
+//		$product_id = get_transient( 'rkv_repo_search_'.$unique );
+
+		return $product_id;
 
 	}
 
@@ -162,6 +188,20 @@ class Reaktiv_Remote_Repo {
 
 		endif;
 
+		// check for missing product unique
+		if ( ! isset( $wp_query->query_vars['unique'] ) ) :
+
+			$response	= array(
+				'success'		=> false,
+				'error_code'	=> 'ITEM_UNIQUE_MISSING',
+				'message'		=> 'No unique ID has been supplied.'
+			);
+
+			$this->output( $response );
+			return false;
+
+		endif;
+
 		// check for missing product version
 		if ( ! isset( $wp_query->query_vars['version'] ) ) :
 
@@ -177,7 +217,8 @@ class Reaktiv_Remote_Repo {
 		endif;
 
 		// check if the product exists
-		$product_id	= self::get_product_id( $wp_query->query_vars['item'] );
+		$product_id	= self::get_product_id( $wp_query->query_vars['unique'] );
+
 		if ( ! $product_id ) :
 
 			$response	= array(
