@@ -21,6 +21,42 @@ span.meta-column-no {
 }
 
 /* post editor */
+
+/* unique ID box */
+#repo-unique-id {
+	background: #fff;
+	padding: 10px;
+	margin: 0 0 10px 0;
+	border: 1px solid #E5E5E5;
+}
+
+#repo-unique-id p {
+	margin: 0;
+	font-size: 16px;
+	line-height: 20px;
+}
+
+#repo-unique-id span.code-item {
+	margin: 0 5px 0 0;
+}
+
+#repo-unique-id span.code-item code {
+	font-size: 18px;
+	line-height: 20px;
+	color: #fff;
+	background: #333;
+	font-weight: 700;
+	letter-spacing: 1px;
+	padding: 3px 10px 2px;
+	cursor: text;
+}
+
+#repo-unique-id span.code-label {
+	font-style: italic;
+	font-size: 14px;
+}
+
+	/* file details */
 input.repo-item-file-text {
 	width: 75%;
 	margin-right: 10px;

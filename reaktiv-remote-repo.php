@@ -68,7 +68,7 @@ class Reaktiv_Remote_Repo {
 
 		// run the endpoint filter with sanitization
 		$endpoint	= apply_filters( 'rkv_remote_repo_endpoint', 'update' );
-		$endpoint	= sanitize_html_class( $endpoint, 'update' );
+		$endpoint	= sanitize_key( $endpoint, 'update' );
 
 		add_rewrite_endpoint( $endpoint, EP_ALL );
 	}
@@ -614,16 +614,16 @@ class Reaktiv_Remote_Repo {
 
 		// Check for update var. Get out if not present
 		if ( ! isset( $wp_query->query_vars['update'] ) )
-			return;
+			return false;
 
 		// bail if no action is set
 		if ( ! isset( $wp_query->query_vars['action'] ) )
-			return;
+			return false;
 
 		// run my validation checks
 		$data	= $this->validate_request( $wp_query );
 		if ( ! $data )
-			return;
+			return false;
 
 		$process	= false;
 
@@ -637,7 +637,7 @@ class Reaktiv_Remote_Repo {
 			$process	= $this->process_plugin_counts( $data );
 
 		if ( ! $process )
-			return;
+			return false;
 
 		// Send out data to the output function
 		$this->output( $process );

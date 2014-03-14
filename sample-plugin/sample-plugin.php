@@ -9,7 +9,7 @@ Author URI:  http://andrewnorcross.com
 Contributors: norcross
 */
 
-DEFINE( 'RKV_UPDATE_URL', 'http://localhost/updater.loc/update/' );
+DEFINE( 'RKV_UPDATE_URL', 'http://api.genesisdesignpro.com/' );
 DEFINE( 'RKV_ITEM', 'Sample Plugin' );
 DEFINE( 'RKV_VERS', '1.0.0' );
 

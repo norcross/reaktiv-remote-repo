@@ -11,9 +11,40 @@ class RKV_Remote_Repo_PostMeta
 	 * @return
 	 */
 	public function __construct() {
+		add_action		(	'edit_form_after_title',				array(	$this,	'item_unique_id'			)			);
+		add_action		(	'add_meta_boxes',						array(	$this,	'create_metaboxes'			)			);
+		add_action		(	'save_post',							array(	$this,	'save_repo_item_meta'		),	1		);
 
-		add_action		(	'add_meta_boxes',						array(	$this, 'create_metaboxes'		)			);
-		add_action		(	'save_post',							array(	$this, 'save_repo_item_meta'	),	1		);
+	}
+
+
+	/**
+	 * [item_unique_id description]
+	 * @return [type] [description]
+	 */
+	public function item_unique_id() {
+
+		global $post;
+
+		// only show for list items
+		if ( $post->post_type != 'repo-items' )
+			return;
+
+		// fetch the unique ID to make sure we have some
+		$unique	= get_post_meta( $post->ID, '_rkv_repo_unique_id', true );
+
+		// display the code if already saved
+		if ( ! empty( $unique ) ) :
+			echo '<div id="repo-unique-id"><p>';
+			echo '<span class="code-item"><code>' . esc_attr( $unique ) . '</code></span>';
+			echo '<span class="code-label">' . __( 'Use this unique ID on the plugin updater class', '' ) . '</span>';
+			echo '<input type="hidden" id="repo-item-unique-id" name="repo-meta[unique-id]" value="' . esc_attr( $unique ) . '">';
+			echo '</p></div>';
+		else:
+			// generate a key and load the hidden field
+			$unique	= wp_generate_password( 16, false, false );
+			echo '<input type="hidden" id="repo-item-unique-id" name="repo-meta[unique-id]" value="' . esc_attr( $unique ) . '">';
+		endif;
 
 	}
 
@@ -155,7 +186,7 @@ class RKV_Remote_Repo_PostMeta
 
 		echo self::readme_notice();
 
-		do_action( 'rkv_remote_repo_before_reademe_meta', $post, $data );
+		do_action( 'rkv_remote_repo_before_readme_meta', $post, $data );
 
 		echo '<tr class="repo-description-field">';
 			echo '<th>';
@@ -199,7 +230,7 @@ class RKV_Remote_Repo_PostMeta
 			echo '</td>';
 		echo '</tr>';
 
-		do_action( 'rkv_remote_repo_after_reademe_meta', $post, $data );
+		do_action( 'rkv_remote_repo_after_readme_meta', $post, $data );
 
 		echo '</tbody>';
 		echo '</table>';
@@ -348,9 +379,14 @@ class RKV_Remote_Repo_PostMeta
 		if ( !current_user_can( 'edit_post', $post_id ) )
 			return $post_id;
 
-
 		// get data via $_POST and store it
 		$data	= $_POST['repo-meta'];
+
+
+		// fetch the unique ID to make sure we have one
+		$unique	= isset( $data['unique-id'] ) && ! empty( $data['unique-id'] ) ? esc_attr( $data['unique-id'] ) : wp_generate_password( 16, false, false );
+
+		update_post_meta( $post_id, '_rkv_repo_unique_id', $unique );
 
 		// trim my upgrade notices
 		if ( isset( $data['upgrade_notice'] ) ) {
