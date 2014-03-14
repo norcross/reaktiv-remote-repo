@@ -36,12 +36,36 @@ class Reaktiv_Remote_Repo {
 	 */
 	public function __construct() {
 
-		add_action			(	'plugins_loaded', 					array(	$this,	'load_files'			) 		);
+		add_action			(	'plugins_loaded', 					array(	$this,	'load_files'			) 			);
 
-		add_action			(	'init',								array(	$this,	'add_endpoint'			)		);
-		add_action			(	'template_redirect',				array(	$this,	'process_query'			),	1	);
-		add_filter			(	'query_vars',						array(	$this,	'query_vars'			)		);
+		add_action			(	'init',								array(	$this,	'add_endpoint'			)			);
+		add_action			(	'template_redirect',				array(	$this,	'process_query'			),	1		);
+		add_filter			(	'query_vars',						array(	$this,	'query_vars'			)			);
 
+		register_activation_hook	(	__FILE__,					array(	$this,	'activate'				)			);
+		register_deactivation_hook	(	__FILE__,					array(	$this,	'deactivate'			)			);
+
+	}
+
+	 /**
+	  * [activate description]
+	  * @return [type] [description]
+	  */
+	public function activate() {
+
+		flush_rewrite_rules();
+
+		// make sure the folder exists
+//		$this->filebase();
+	}
+
+	/**
+	 * [deactivate description]
+	 * @return [type] [description]
+	 */
+	public function deactivate() {
+
+		flush_rewrite_rules();
 	}
 
 	/**
@@ -93,6 +117,34 @@ class Reaktiv_Remote_Repo {
 		$vars	= apply_filters( 'rkv_remote_repo_vars', $vars );
 
 		return $vars;
+	}
+
+	/**
+	 * [filebase description]
+	 * @param  [type] $key [description]
+	 * @return [type]      [description]
+	 */
+	static function filebase( $key = false ) {
+
+		$custom		= apply_filters( 'rkv_remote_repo_uploads_folder', 'rkv-repo' );
+
+		$uploads	= wp_upload_dir();
+		$basedir	= $uploads['basedir'].'/' . $custom . '/';
+		$baseurl	= $uploads['baseurl'].'/' . $custom . '/';
+
+		// check if folder exists. if not, make it
+		if ( ! is_dir( $basedir ) )
+			mkdir( $basedir );
+
+		// set the CHMOD in case
+		chmod( $basedir, 0755 );
+
+		if ( ! $key )
+			return array(
+				'basedir'	=> $basedir,
+				'baseurl'	=> $baseurl
+			);
+
 	}
 
 	/**

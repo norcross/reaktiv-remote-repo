@@ -36,10 +36,10 @@ class RKV_Remote_Repo_PostMeta
 		// display the code if already saved
 		if ( ! empty( $unique ) ) :
 			echo '<div id="repo-unique-id"><p>';
-			echo '<span class="code-item"><code>' . esc_attr( $unique ) . '</code></span>';
-			echo '<span class="code-label">' . __( 'Use this unique ID on the plugin updater class', '' ) . '</span>';
+			echo '<p class="code-item"><code>' . esc_attr( $unique ) . '</code></p>';
+			echo '<p class="code-label">' . __( 'Use this unique ID on the plugin updater class', '' ) . '</p>';
 			echo '<input type="hidden" id="repo-item-unique-id" name="repo-meta[unique-id]" value="' . esc_attr( $unique ) . '">';
-			echo '</p></div>';
+			echo '</div>';
 		else:
 			// generate a key and load the hidden field
 			$unique	= wp_generate_password( 16, false, false );

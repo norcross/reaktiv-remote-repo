@@ -31,16 +31,18 @@ span.meta-column-no {
 }
 
 #repo-unique-id p {
+	display: inline-block;
+	vertical-align: top;
 	margin: 0;
 	font-size: 16px;
 	line-height: 20px;
 }
 
-#repo-unique-id span.code-item {
+#repo-unique-id p.code-item {
 	margin: 0 5px 0 0;
 }
 
-#repo-unique-id span.code-item code {
+#repo-unique-id p.code-item code {
 	font-size: 18px;
 	line-height: 20px;
 	color: #fff;
@@ -51,7 +53,7 @@ span.meta-column-no {
 	cursor: text;
 }
 
-#repo-unique-id span.code-label {
+#repo-unique-id p.code-label {
 	font-style: italic;
 	font-size: 14px;
 }

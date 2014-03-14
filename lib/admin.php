@@ -12,16 +12,141 @@ class RKV_Remote_Repo_Admin
 	 */
 	public function __construct() {
 
-		add_action		(	'init',									array(	$this, '_register_types'		) 			);
-		add_action		(	'admin_enqueue_scripts',				array(	$this, 'admin_enqueue'			),	10		);
-		add_action		(	'manage_posts_custom_column',			array(	$this, 'display_columns'		),	10,	2	);
+		add_action		(	'init',									array(	$this,	'_register_types'		) 			);
+		add_action		(	'admin_init',							array(	$this,	'secure_upload_dir'		)			);
+		add_action		(	'admin_enqueue_scripts',				array(	$this,	'admin_enqueue'			),	10		);
+		add_action		(	'manage_posts_custom_column',			array(	$this,	'display_columns'		),	10,	2	);
 
-		add_filter		(	'custom_menu_order',					array(	$this, 'menu_order'				)           );
-		add_filter		(	'menu_order',							array(	$this, 'menu_order'				)           );
-		add_filter		(	'manage_edit-repo-items_columns',		array(	$this, 'repo_columns'			)			);
+		add_filter		(	'custom_menu_order',					array(	$this,	'menu_order'			)           );
+		add_filter		(	'menu_order',							array(	$this,	'menu_order'			)           );
+		add_filter		(	'manage_edit-repo-items_columns',		array(	$this,	'repo_columns'			)			);
+		add_filter		(	'upload_dir',							array(	$this,	'create_repo_dir'		),	999		);
+	}
+
+	/**
+	 * create a custom folder inside uploads to store protected content
+	 * @param  [type] $args [description]
+	 * @return [type]       [description]
+	 */
+	public function create_repo_dir( $args ) {
+
+		// bail if no post type is present
+		if( ! isset( $_REQUEST['post_id'] ) )
+			return $args;
+
+    	// Get and set the current post_id
+		$post_id	= (int)$_REQUEST['post_id'];
+
+		$post_type	= get_post_type( $post_id );
+
+		if( 'repo-items' != $post_type )
+			return $args;
+
+		// Set the new path depends on current post_type
+		$custom	= self::get_custom_dir();
+
+		$args['path']    = str_replace( $args['subdir'], '', $args['path'] ); //remove default subdir
+		$args['url']     = str_replace( $args['subdir'], '', $args['url'] );
+		$args['subdir']  = $custom;
+		$args['path']   .= $custom;
+		$args['url']    .= $custom;
+
+		return $args;
 
 	}
 
+	/**
+	 * [set_custom_dir description]
+	 */
+	static function get_custom_dir() {
+
+		return apply_filters( 'rkv_remote_repo_custom_dir', 'rkv-repo' );
+
+	}
+
+	/**
+	 * confirm the folder exists and it writeable
+	 * @return [string] the custom upload path
+	 */
+	static function get_upload_dir() {
+
+		// get current upload directory
+		$upload	= wp_upload_dir();
+
+		// get our custom directory
+		$custom	= self::get_custom_dir();
+
+		// check and make our folder if need be
+		wp_mkdir_p( $upload['basedir'] . '/'.$custom );
+
+		// set our new path
+		$path	= $upload['basedir'] . '/'.$custom;
+
+		return $path;
+
+	}
+
+	/**
+	 * confirm the htaccess file exists
+	 * @return [bool] true on file existence
+	 */
+	static function htaccess_exists() {
+		$upload_path = self::get_upload_dir();
+
+		return file_exists( $upload_path . '/.htaccess' );
+	}
+
+	/**
+	 * the htaccess file rules to be written for filter protection
+	 * @return [string] the rules
+	 */
+	static function get_htaccess_rules() {
+
+		$rules = "Options -Indexes\n";
+		$rules .= "deny from all\n";
+
+		return $rules;
+	}
+
+	/**
+	 * Creates blank index.php and .htaccess files
+	 *
+	 * This function runs approximately once per month in order to ensure all folders
+	 * have their necessary protection files
+	 *
+	 * @return void
+	 */
+	public function secure_upload_dir() {
+
+//		if ( false === get_transient( 'rkv_check_protection_files' ) ) {
+
+			$upload_path = self::get_upload_dir();
+
+			// Make sure the /edd folder is created
+			wp_mkdir_p( $upload_path );
+
+			// Top level .htaccess file
+			$rules = self::get_htaccess_rules();
+			if ( self::htaccess_exists() ) {
+				$contents = @file_get_contents( $upload_path . '/.htaccess' );
+				if ( $contents !== $rules || ! $contents ) {
+					// Update the .htaccess rules if they don't match
+					@file_put_contents( $upload_path . '/.htaccess', $rules );
+				}
+			} elseif( wp_is_writable( $upload_path ) ) {
+				// Create the file if it doesn't exist
+				@file_put_contents( $upload_path . '/.htaccess', $rules );
+			}
+
+			// Top level blank index.php
+			if ( ! file_exists( $upload_path . '/index.php' ) && wp_is_writable( $upload_path ) ) {
+				@file_put_contents( $upload_path . '/index.php', '<?php' . PHP_EOL . '// Silence is golden.' );
+			}
+
+			// Check for the files once per day
+//			set_transient( 'rkv_check_protection_files', true, 3600 * 24 );
+//		}
+	}
 
 	/**
 	 * Scripts and stylesheets
@@ -35,13 +160,18 @@ class RKV_Remote_Repo_Admin
 
 		if ( is_object( $screen ) && $screen->post_type == 'repo-items' ) :
 
+			global $post;
+
 			wp_enqueue_style( 'rkv-repo',	plugins_url( '/css/rkv.repo.admin.css', __FILE__ ), array(), null,	'all' );
 
-			wp_enqueue_media();
+			wp_enqueue_media( array( 'post' => $post->ID ) );
 			wp_enqueue_script( 'datepick',	plugins_url( '/js/jquery.datepick.min.js', __FILE__ ),	array('jquery'),	null, true	);
 			wp_enqueue_script( 'rkv-repo', plugins_url( '/js/rkv.repo.admin.js', __FILE__ ) , array( 'jquery', 'jquery-ui-sortable' ), null, true );
 			wp_localize_script( 'rkv-repo', 'rkvAsset', array(
 				'icon' => '<i class="dashicons dashicons-calendar rkv-cal-icon"></i>',
+				'uptitle'	=> 'Upload or select a file',
+				'upbutton'	=> 'Add This File',
+				'upcheck'	=> '<i class="dashicons dashicons-yes niica-mpc-yes"></i>',
 			));
 
 		endif;
@@ -185,8 +315,8 @@ class RKV_Remote_Repo_Admin
 			'capability_type'		=> 'post',
 			'query_var'				=> true,
 			'menu_icon'				=> 'dashicons-share-alt',
-			'rewrite'				=> false,
-			'has_archive'			=> false,
+			'rewrite'				=> array( 'slug' => 'repo', 'with_front' => false ),
+			'has_archive'			=> 'repo',
 			'supports'				=> array( 'title' ),
 		);
 
