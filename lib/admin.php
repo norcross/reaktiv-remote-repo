@@ -60,7 +60,7 @@ class RKV_Remote_Repo_Admin
 	 */
 	static function get_custom_dir() {
 
-		return apply_filters( 'rkv_remote_repo_custom_dir', 'rkv-repo' );
+		return apply_filters( 'rkv_remote_repo_custom_dir', '/rkv-repo' );
 
 	}
 
@@ -77,10 +77,10 @@ class RKV_Remote_Repo_Admin
 		$custom	= self::get_custom_dir();
 
 		// check and make our folder if need be
-		wp_mkdir_p( $upload['basedir'] . '/'.$custom );
+		wp_mkdir_p( $upload['basedir'] .$custom );
 
 		// set our new path
-		$path	= $upload['basedir'] . '/'.$custom;
+		$path	= $upload['basedir'] . $custom;
 
 		return $path;
 
@@ -103,7 +103,10 @@ class RKV_Remote_Repo_Admin
 	static function get_htaccess_rules() {
 
 		$rules = "Options -Indexes\n";
-		$rules .= "deny from all\n";
+		$rules .= "<FilesMatch '\.(zip)$'>\n";
+		    $rules .= "Order Allow,Deny\n";
+		    $rules .= "Allow from all\n";
+		$rules .= "</FilesMatch>\n";
 
 		return $rules;
 	}
@@ -315,8 +318,8 @@ class RKV_Remote_Repo_Admin
 			'capability_type'		=> 'post',
 			'query_var'				=> true,
 			'menu_icon'				=> 'dashicons-share-alt',
-			'rewrite'				=> array( 'slug' => 'repo', 'with_front' => false ),
-			'has_archive'			=> 'repo',
+			'rewrite'				=> false,
+			'has_archive'			=> false,
 			'supports'				=> array( 'title' ),
 		);
 

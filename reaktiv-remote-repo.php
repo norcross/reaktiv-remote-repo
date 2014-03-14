@@ -253,6 +253,22 @@ class Reaktiv_Remote_Repo {
 
 		endif;
 
+		// run my comparison
+		$unique_id	= self::fetch_product_unique( $product_id );
+
+		if ( $wp_query->query_vars['unique'] != $unique_id ) :
+
+			$response	= array(
+				'success'		=> false,
+				'error_code'	=> 'UNIQUE_MISMATCH',
+				'message'		=> 'The unique key provided does not match the requested item.'
+			);
+
+			$this->output( $response );
+			return false;
+
+		endif;
+
 		// fetch product data for the rest
 		$product_data	= $this->get_product_data( absint( $product_id ) );
 
@@ -469,6 +485,27 @@ class Reaktiv_Remote_Repo {
 	}
 
 	/**
+	 * [fetch_product_unique description]
+	 * @param  [type] $product_id [description]
+	 * @return [type]             [description]
+	 */
+	static function fetch_product_unique( $product_id, $link = false ) {
+
+		$unique	= get_post_meta( $product_id, '_rkv_repo_unique_id', true );
+
+		if ( ! $unique )
+			return false;
+
+		// send back the key if we don't need a link
+		if ( ! $link )
+			return $unique;
+
+		// send back the constructed URL
+		return add_query_arg( array( 'download_key' => $unique ), home_url( '/' ) );
+
+	}
+
+	/**
 	 * fetch the product data
 	 * @param  int $product_id product ID
 	 * @return array
@@ -487,7 +524,8 @@ class Reaktiv_Remote_Repo {
 		$tested			= self::get_lineitem_data( $product_id, $data, 'tested' );
 
 		// pull items from post meta
-		$package	= isset( $data['package'] )			? esc_url( $data['package'] )			: '';
+		$package	= self::fetch_product_unique( $product_id, true );
+		$item_url	= isset( $data['package'] )			? esc_url( $data['package'] )			: '';
 		$homepage	= isset( $data['homepage'] )		? esc_url( $data['homepage'] )			: '';
 		$version	= isset( $data['version'] )			? esc_html( $data['version'] )			: '';
 		$author		= isset( $data['author'] )			? esc_html( $data['author'] )			: '';
@@ -514,6 +552,8 @@ class Reaktiv_Remote_Repo {
 
 		// build out the big array
 		$product_data	= array(
+			'product_id'	=> $product_id,
+			'item-url'		=> $item_url,
 			'package'		=> $package,
 			'homepage'		=> $homepage,
 			'description'	=> $description,
@@ -574,6 +614,8 @@ class Reaktiv_Remote_Repo {
 	 * @return [type]       [description]
 	 */
 	public function process_plugin_version( $data, $slug ) {
+
+		//fetch_product_unique
 
 		$fields	= array(
 			'slug'					=> $slug,
@@ -749,7 +791,7 @@ class Reaktiv_Remote_Repo {
 				wp_die(	'No download exists.' );
 			}
 
-			$package = $this->get_product_data( $product_id, 'package' );
+			$package = $this->get_product_data( $product_id, 'item-url' );
 
 			$file_extension = $this->get_file_extension( $package );
 			$ctype          = $this->get_file_ctype( $file_extension );
