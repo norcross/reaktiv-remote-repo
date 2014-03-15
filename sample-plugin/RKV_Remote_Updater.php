@@ -12,10 +12,11 @@ set_site_transient( 'update_plugins', false );
  */
 class RKV_Remote_Updater {
 
-	private $api_url  = '';
-	private $api_data = array();
-	private $name     = '';
-	private $slug     = '';
+	private $api_url	= '';
+	private $api_data	= array();
+	private $name		= '';
+	private $unique		= '';
+	private $slug		= '';
 
 	/**
 	 * Class constructor.
@@ -31,12 +32,12 @@ class RKV_Remote_Updater {
 
 	function __construct( $_api_url, $_plugin_file, $_api_data = null ) {
 
-		$this->api_url  = trailingslashit( $_api_url );
-		$this->api_data = urlencode_deep( $_api_data );
-		$this->name     = plugin_basename( $_plugin_file );
-		$this->item		= $_api_data['item'];
-		$this->slug     = basename( $_plugin_file, '.php');
-		$this->version  = $_api_data['version'];
+		$this->api_url	= trailingslashit( $_api_url );
+		$this->api_data	= urlencode_deep( $_api_data );
+		$this->name		= plugin_basename( $_plugin_file );
+		$this->slug		= basename( $_plugin_file, '.php');
+		$this->version	= $_api_data['version'];
+		$this->unique	= $_api_data['unique'];
 
 		// Set up hooks.
 		$this->hook();
@@ -146,7 +147,7 @@ class RKV_Remote_Updater {
 			return;
 
 		// check for array elements, bail if missing
-		if ( ! isset( $data['item'] ) || ! isset( $data['version'] ) )
+		if ( ! isset( $data['unique'] ) || ! isset( $data['version'] ) )
 			return;
 
 		// build array
@@ -156,7 +157,7 @@ class RKV_Remote_Updater {
 			'sslverify' => false,
 			'body'		=> array(
 				'action'	=> $_action,
-				'item'		=> $data['item'],
+				'unique'	=> $data['unique'],
 				'version'	=> $data['version'],
 				'slug' 		=> $data['slug'],
 			),
@@ -272,7 +273,7 @@ class RKV_Remote_Updater {
 			'sslverify' => false,
 			'body'		=> array(
 				'action'	=> 'update_counts',
-				'item'		=> $data['item'],
+				'unique'	=> $data['unique'],
 				'version'	=> $data['version'],
 				'slug' 		=> $data['slug'],
 			),
@@ -309,7 +310,7 @@ class RKV_Remote_Updater {
 
 		// build our data array
 		$data	= array(
-			'item'		=> $this->item,
+			'unique'	=> $this->unique,
 			'version'	=> $this->version,
 			'slug'		=> $this->slug,
 		);
