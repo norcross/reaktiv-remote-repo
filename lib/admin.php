@@ -169,7 +169,7 @@ class RKV_Remote_Repo_Admin
 
 			wp_enqueue_media( array( 'post' => $post->ID ) );
 			wp_enqueue_script( 'datepick',	plugins_url( '/js/jquery.datepick.min.js', __FILE__ ),	array('jquery'),	null, true	);
-			wp_enqueue_script( 'rkv-repo', plugins_url( '/js/rkv.repo.admin.js', __FILE__ ) , array( 'jquery', 'jquery-ui-sortable' ), null, true );
+			wp_enqueue_script( 'rkv-repo', plugins_url( '/js/rkv.repo.admin.js', __FILE__ ) , array( 'jquery', 'jquery-ui-sortable', 'media-upload' ), null, true );
 			wp_localize_script( 'rkv-repo', 'rkvAsset', array(
 				'icon' => '<i class="dashicons dashicons-calendar rkv-cal-icon"></i>',
 				'uptitle'	=> 'Upload or select a file',
