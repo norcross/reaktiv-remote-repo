@@ -7,9 +7,9 @@ A plugin to provide a self-hosted WP plugin repository
 ## General Setup ##
 
 To properly set this up, you must add some code to your plugin, with data from the site you have set up Reaktiv Remote Repo on.
-All of this should reside in your root file.
+All of this should reside in your root file. Note: all of this code resides in your individual plugin. The actual updater class
+does not get modified in any way.
 
-### Your Plugin ###
 
 You first add your repository update URL as a constant. It should be the domain of your site, with `update` on the end.
 
